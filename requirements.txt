@@ -1,0 +1,9 @@
+scipy
+matplotlib
+keras
+tensorflow
+scikit-learn
+
+spellchecker
+pyspellchecker
+easynmt
