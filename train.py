@@ -18,6 +18,9 @@ from keras.utils.vis_utils import plot_model
 from keras.models import Model, Sequential
 from keras.applications.densenet import DenseNet121
 from keras.applications.vgg16 import VGG16
+from tensorflow.keras.applications.inception_v3 import InceptionV3
+from tensorflow.keras import layers
+from tensorflow.keras import Model
 from keras.applications.densenet import preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint
@@ -115,6 +118,55 @@ def create_pretrained_model_vgg():
     VGG.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
+# Loading inception v3 network for transfer learning
+'''
+Source: inception_v3_model
+'''
+def create_pretrained_model_inception_v3():
+    WEIGHTS_FILE = './inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
+
+    inception_v3_model = InceptionV3(
+        input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3),
+        include_top=False,
+        weights='imagenet'
+    )
+
+    # Not required --> inception_v3_model.load_weights(WEIGHTS_FILE)
+
+    # Enabling the top 2 inception blocks to train
+    for layer in inception_v3_model.layers[:249]:
+        layer.trainable = False
+    for layer in inception_v3_model.layers[249:]:
+        layer.trainable = True
+
+        # Choosing the inception output layer:
+
+        # Choosing the output layer to be merged with our FC layers (if required)
+        inception_output_layer = inception_v3_model.get_layer('mixed7')
+        print('Inception model output shape:', inception_output_layer.output_shape)
+
+        # Not required --> inception_output = inception_output_layer.output
+        inception_output = inception_v3_model.output
+
+        # Inception model output shape: (None, 10, 10, 768)
+        # Adding our own set of fully connected layers at the end of Inception v3 network:
+        from tensorflow.keras.optimizers import RMSprop, Adam, SGD
+
+        x = layers.GlobalAveragePooling2D()(inception_output)
+        x = layers.Dense(1024, activation='relu')(x)
+        # Not required --> x = layers.Dropout(0.2)(x)
+        x = layers.Dense(29, activation='softmax')(x)
+
+        model = Model(inception_v3_model.input, x)
+
+        model.compile(
+            optimizer=SGD(lr=0.0001, momentum=0.9),
+            loss='categorical_crossentropy',
+            metrics=['acc']
+        )
+
+    return model
+
 
 # 2d cnn model for classifying image data
 def create_custom_model_2d_cnn():
@@ -158,14 +210,23 @@ def create_custom_model_2d_cnn():
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
 
     # The prevous step gives an output of multi dimentional data, which cannot be fead directly into the feed forward neural network. Hence, the model is flattened
+    #model.add(Flatten())
+    ## One hidden layer of 2048 neurons have been used in order to have better classification results    # ToDo: compare classification results for different sizes of hidden layer
+    #model.add(Dense(2048))  # , kernel_initializer='normal', activation='relu'))
+    #model.add(keras.layers.ELU())
+    #model.add(BatchNormalization())
+    #model.add(Dropout(0.5))
+    ## The final neuron HAS to be of the same number as classes to predict and cannot be more than that.
+    #model.add(Dense(num_of_classes, activation='softmax'))  # , activation='sigmoid'))
+
+    # Final layer
     model.add(Flatten())
-    # One hidden layer of 2048 neurons have been used in order to have better classification results    # ToDo: compare classification results for different sizes of hidden layer
-    model.add(Dense(2048))  # , kernel_initializer='normal', activation='relu'))
-    model.add(keras.layers.ELU())
-    model.add(BatchNormalization())
-    model.add(Dropout(0.5))
-    # The final neuron HAS to be of the same number as classes to predict and cannot be more than that.
-    model.add(Dense(num_of_classes, activation='softmax'))  # , activation='sigmoid'))
+    model.add(Dense(4096, activation='relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(2048, activation='relu'))
+    model.add(Dropout(0.1))
+    model.add(Dense(29, activation='softmax'))
+
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     return model
 
