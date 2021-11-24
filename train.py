@@ -18,15 +18,15 @@ import models
 gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
 session = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
-chkp_filepath = 'dataset/saved_model/checkpoints'  # input("Enter the filename you want your model to be saved as: ")
-train_path = 'dataset/Image'  # input("Enter the directory of the training images: ")
-valid_path = 'dataset/Image'  # input("Enter the directory of the validation images: ")
+chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
+train_path = 'dataset/Image'                        # Enter the directory of the training images
+valid_path = 'dataset/Image'                        # Enter the directory of the validation images
 
 epochs = 10
 batch_size = 32
-image_size = 256
-IMAGE_SIZE = [image_size, image_size]       # re-size all the images to this
-save_trained_model = True
+image_size = 32
+IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
+save_trained_model = False
 
 
 def get_num_of_classes():
