@@ -11,18 +11,16 @@ import keras.layers
 from keras.models import Model, Sequential
 from keras.applications.densenet import DenseNet121
 from keras.applications.vgg16 import VGG16
-from tensorflow.keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras import layers
 from tensorflow.keras import Model
 from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool1D, Flatten, Conv2D, MaxPool2D, BatchNormalization, MaxPooling2D
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, Add, Input, ZeroPadding2D, AveragePooling2D,GlobalAveragePooling2D
 import keras.optimizers
 import tensorflow as tf
-
 import train
 
 train_path = train.train_path
-
 image_size = train.image_size
 IMAGE_SIZE = train.IMAGE_SIZE
 

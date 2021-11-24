@@ -8,15 +8,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 from glob import glob
 import tensorflow as tf
-import tensorflow.python.client.session
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint
 import plots
 import models
 
 
-gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
-session = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
+# gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
+# session = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
 chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
 train_path = 'dataset/Image'                        # Enter the directory of the training images
