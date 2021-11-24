@@ -1,4 +1,4 @@
-# MVP
+# MVP - Image Classification
 
 First MVP of a 2D CNN with custom architecture and a pretrained model that was adapted using transfer learning:
 
