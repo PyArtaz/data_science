@@ -3,6 +3,7 @@ from keras.models import model_from_json
 from train import load_images
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
+import plots
 
 # To filter Warnings and Information logs
 # 0 | DEBUG | [Default] Print all messages
@@ -50,7 +51,9 @@ plt.show()
 print('Classification Report')
 print(classification_report(test_generator.classes, predicted_categories, target_names=labels))
 
-# evaluate loaded model on test data
-# loaded_model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
-# score = loaded_model.evaluate(X, Y, verbose=0)
-# print("%s: %.2f%%" % (loaded_model.metrics_names[1], score[1]*100))
+#ToDo: Plot ROC curve
+#plots.plot_roc("Train Baseline", train_labels, train_predictions_baseline, color=colors[0])
+#plots.plot_roc("Test Baseline", test_labels, test_predictions_baseline, color=colors[0], linestyle='--')
+#plots.plot_roc("Test Baseline", test_generator.classes, predicted_categories, color=plots.colors[0], linestyle='--')
+#plt.legend(loc='lower right')
+
