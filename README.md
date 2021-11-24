@@ -17,6 +17,6 @@ Additionally, repository contains two spelling correction scripts:
 2. Richte ein eigenes Repository auf github/gitlab ein. Darüber könnt ihr später die Abgaben eurer Modelle machen.
 3. Python Virtual-Environment anlegen (z.B. mit Anaconda oder in PyCharm)
 4. "requirements.txt" mit `pip install -r requirements.txt` ausführen und die notwendigen Pakete installieren
-5. Speichere den nach labels separierten Bilder-Datensatz im Projekt-Subordner `datasets/images`
+5. Speichere den nach labels separierten Bilder-Datensatz im Projekt-Subordner `datasets/Image`
 6. Training des Modells: `train.py`
 7. Evaluation des Modells: `predict.py`
