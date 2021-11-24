@@ -12,7 +12,6 @@ from sklearn.metrics import roc_curve
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-# ToDo: save plots with filename in format: datetime-model_name-image_resolution-number_of_epochs-batch_size
 
 def plot_model_structure(model_, detailed_model_name):
     if not os.path.exists('dataset/diagrams/'):
@@ -21,6 +20,7 @@ def plot_model_structure(model_, detailed_model_name):
     plot_model(model_, to_file='dataset/diagrams/' + detailed_model_name + '.png', show_shapes=True, show_layer_names=True)  # , rankdir='LR')  # for horizontal direction
 
 
+# ToDo: save plots with detailed_model_name
 # Plot the model Accuracy graph
 def plot_training_history(history):
     fig, (ax1, ax2) = plt.subplots(2)
