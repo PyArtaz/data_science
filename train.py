@@ -8,8 +8,6 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 from glob import glob
-import numpy as np
-from scipy import stats
 import matplotlib.pyplot as plt
 
 import keras
@@ -18,13 +16,9 @@ from keras.applications.densenet import DenseNet121
 from keras.applications.densenet import preprocess_input
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint
-from keras import backend as K
 from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool1D, Flatten, Conv2D, MaxPool2D, BatchNormalization
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras import optimizers
-from torch.nn.utils.rnn import pad_sequence
-import torch
 
 
 gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
@@ -34,11 +28,11 @@ chkp_filepath = 'dataset/saved_model/checkpoints'  # input("Enter the filename y
 train_path = 'dataset/Image'  # input("Enter the directory of the training images: ")
 valid_path = 'dataset/Image'  # input("Enter the directory of the validation images: ")
 
-epochs = 50
+epochs = 30
 batch_size = 32
-image_size = 128
+image_size = 256
 IMAGE_SIZE = [image_size, image_size]       # re-size all the images to this
-save_model = True
+save_trained_model = True
 
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
@@ -97,8 +91,8 @@ def create_model_densenet121():
 
     return model
 
+# 2d cnn model for classifying image data
 def create_model_2d_cnn():
-    # 2d cnn model for classifying image data
     model = Sequential()
 
     # We are using 4 convolution layers for feature extraction
@@ -151,6 +145,48 @@ def create_model_2d_cnn():
 
     return model
 
+# Plot the model Accuracy graph
+def plot_training_history(history):
+    fig, (ax1, ax2) = plt.subplots(2)
+    fig.suptitle('Training and Validation loss')
+
+    # Plot the model Accuracy graph (Ideally, it should be Logarithmic shape)
+    ax1.plot(history.history['accuracy'], 'r', linewidth=3.0, label='Training Accuracy')
+    ax1.plot(history.history['val_accuracy'], 'b', linewidth=3.0, label='Validation Accuracy')
+    ax1.legend(fontsize=12)
+    ax1.set(xlabel='Epochs ', ylabel='Accuracy')
+    ax1.set_title('Accuracy Curves')
+
+    ax1.set_axisbelow(True)                                                     # Don't allow the axis to be on top of your data
+    ax1.minorticks_on()                                                         # Turn on the minor TICKS, which are required for the minor GRID
+    ax1.grid(which='major', linestyle='-', linewidth='0.5', color='black')        # Customize the major grid
+    ax1.grid(which='minor', linestyle=':', linewidth='0.5', color='black')      # Customize the minor grid
+
+    # Plot the model Loss graph (Ideally it should be Exponentially decreasing shape)
+    ax2.plot(history.history['loss'], 'g', linewidth=3.0, label='Training Loss')
+    ax2.plot(history.history['val_loss'], 'y', linewidth=3.0, label='Validation Loss')
+    ax2.legend(fontsize=12)
+    ax2.set(xlabel='Epochs ', ylabel='Loss')
+    ax2.set_title('Loss Curves')
+
+    ax2.set_axisbelow(True)                                                     # Don't allow the axis to be on top of your data
+    ax2.minorticks_on()                                                         # Turn on the minor TICKS, which are required for the minor GRID
+    ax2.grid(which='major', linestyle='-', linewidth='0.5', color='black')        # Customize the major grid
+    ax2.grid(which='minor', linestyle=':', linewidth='0.5', color='black')      # Customize the minor grid
+
+    fig.tight_layout()
+    plt.show()
+
+# Save the models and weight for future purposes
+def save_model(model):
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open("dataset/saved_model/model.json", "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    model.save_weights("dataset/saved_model/model.h5")
+    print("\nSaved model to disk")
+
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     start_time = time.time()
@@ -163,43 +199,17 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # load model that uses custom architecture
     # model_ = create_model_2d_cnn()
 
-    # view the structure of the model
+    # View the structure of the model
     # model_.summary()
 
-    # train the model
+    # Train the model
     history, model = train_model(model_, train_generator, valid_generator)
 
     pred_time = time.time() - start_time
     print("\nRuntime", pred_time, "s")
 
-    fig, (ax1, ax2) = plt.subplots(2)
-    fig.suptitle('Vertically stacked subplots')
+    # Plot the model Accuracy graph
+    plot_training_history(history)
 
-    # Plot the model Accuracy graph (Ideally, it should be Logarithmic shape)
-    ax1.plot(history.history['accuracy'], 'r', linewidth=3.0, label='Training Accuracy')
-    ax1.plot(history.history['val_accuracy'], 'b', linewidth=3.0, label='Testing Accuracy')
-    plt.legend(fontsize=18)
-    ax1.set(xlabel='Epochs ', ylabel='Accuracy')#, fontsize=16)
-    ax1.set_title('Accuracy Curves')#, fontsize=16)
-
-    # Plot the model Loss graph (Ideally it should be Exponentially decreasing shape)
-    ax2.plot(history.history['loss'], 'g', linewidth=3.0, label='Training Loss')
-    ax2.plot(history.history['val_loss'], 'y', linewidth=3.0, label='Testing Loss')
-    plt.legend(fontsize=18)
-    ax2.set(xlabel='Epochs ', ylabel='Loss')#, fontsize=16)
-    ax2.set_title('Loss Curves')#, fontsize=16)
-
-    fig.tight_layout()
-    plt.show()
-
-    if save_model:
-        # save the models and weight for future purposes
-        # serialize model to JSON
-        model_json = model.to_json()
-        with open("dataset/saved_model/model.json", "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights("dataset/saved_model/model.h5")
-        print("\nSaved model to disk")
-
-
+    if save_trained_model:
+        save_model(model)
