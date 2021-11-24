@@ -38,7 +38,7 @@ epochs = 50
 batch_size = 32
 image_size = 128
 IMAGE_SIZE = [image_size, image_size]       # re-size all the images to this
-save_model = False
+save_model = True
 
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
@@ -189,7 +189,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     ax2.set(xlabel='Epochs ', ylabel='Loss')#, fontsize=16)
     ax2.set_title('Loss Curves')#, fontsize=16)
 
-    #fig.tight_layout()
+    fig.tight_layout()
     plt.show()
 
     if save_model:
