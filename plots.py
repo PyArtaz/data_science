@@ -1,9 +1,25 @@
+# To filter Warnings and Information logs
+# 0 | DEBUG | [Default] Print all messages
+# 1 | INFO | Filter out INFO messages
+# 2 | WARNING | Filter out INFO & WARNING messages
+# 3 | ERROR | Filter out all messages
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import os
 import matplotlib.pyplot as plt
+from keras.utils.vis_utils import plot_model
 from sklearn.metrics import roc_curve
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 # ToDo: save plots with filename in format: datetime-model_name-image_resolution-number_of_epochs-batch_size
+
+def plot_model_structure(model_, detailed_model_name):
+    if not os.path.exists('dataset/diagrams/'):
+        os.makedirs('dataset/diagrams/')
+    # creates the file model_plot.png with a diagram of the created modelmodel structure
+    plot_model(model_, to_file='dataset/diagrams/' + detailed_model_name + '.png', show_shapes=True, show_layer_names=True)  # , rankdir='LR')  # for horizontal direction
+
 
 # Plot the model Accuracy graph
 def plot_training_history(history):
@@ -39,14 +55,13 @@ def plot_training_history(history):
 
 
 def plot_metrics(history):
-    metrics = ['loss', 'prc', 'precision', 'recall']
+    metrics = ['accuracy', 'loss']  #, 'precision', 'recall']
 
     for n, metric in enumerate(metrics):
         name = metric.replace("_"," ").capitalize()
-        fig = plt.subplot(2,2,n+1)
+        fig = plt.subplot(1,2,n+1)
         plt.plot(history.epoch, history.history[metric], color=colors[0], label='Train')
-        plt.plot(history.epoch, history.history['val_'+metric],
-                 color=colors[0], linestyle="--", label='Val')
+        plt.plot(history.epoch, history.history['val_'+metric], color=colors[0], linestyle="--", label='Val')
         plt.xlabel('Epoch')
         plt.ylabel(name)
         if metric == 'loss':
@@ -56,8 +71,9 @@ def plot_metrics(history):
         else:
             plt.ylim([0,1])
 
-        fig.tight_layout()
         plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_roc(name, labels, predictions, **kwargs):
@@ -72,4 +88,6 @@ def plot_roc(name, labels, predictions, **kwargs):
     ax = plt.gca()
     ax.set_aspect('equal')
 
+    plt.tight_layout()
     plt.legend()
+    plt.show()

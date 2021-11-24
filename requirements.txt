@@ -1,8 +1,13 @@
+# ToDo: Update requirements.txt at the end of project
 scipy
 matplotlib
 keras
 tensorflow
 scikit-learn
+
+pydot
+pydotplus
+graphviz
 
 spellchecker
 pyspellchecker
