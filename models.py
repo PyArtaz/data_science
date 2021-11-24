@@ -60,6 +60,9 @@ def create_pretrained_model_densenet121():
     return model, 'pretrained_model_densenet121'
 
 # Loading pretrained vgg network for transfer learning
+'''
+Source: https://github.com/krishnasahu29/SignLanguageRecognition/blob/main/vgg16.ipynb
+'''
 def create_pretrained_model_vgg():
     num_of_classes = get_num_of_classes()
     adam = tf.keras.optimizers.Adam(learning_rate=0.001)

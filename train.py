@@ -34,7 +34,9 @@ def get_num_of_classes():
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
 def load_images():
-    train_gen = ImageDataGenerator(rescale=1. / 255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, validation_split=0.2)  # rescale=1./255 to scale colors to values between [0,1]
+    train_gen = ImageDataGenerator(rescale=1. / 255, zoom_range=0.2, rotation_range=50,
+                                   width_shift_range=0.2, height_shift_range=0.2, shear_range=0.2,
+                                   horizontal_flip=True, fill_mode='nearest', validation_split=0.2)  # rescale=1./255 to scale colors to values between [0,1]
     test_gen = ImageDataGenerator(rescale=1. / 255, validation_split=0.2)
 
     train_generator = train_gen.flow_from_directory(train_path, target_size=IMAGE_SIZE, shuffle=True, batch_size=batch_size, subset='training') #, class_mode='categorical')
