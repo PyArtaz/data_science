@@ -1,10 +1,3 @@
-# To filter Warnings and Information logs
-# 0 | DEBUG | [Default] Print all messages
-# 1 | INFO | Filter out INFO messages
-# 2 | WARNING | Filter out INFO & WARNING messages
-# 3 | ERROR | Filter out all messages
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 from glob import glob
 import tensorflow as tf
@@ -12,6 +5,14 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint
 import plots
 import models
+
+# To filter Warnings and Information logs
+# 0 | DEBUG | [Default] Print all messages
+# 1 | INFO | Filter out INFO messages
+# 2 | WARNING | Filter out INFO & WARNING messages
+# 3 | ERROR | Filter out all messages
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
 # gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
@@ -21,11 +22,12 @@ chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you wan
 train_path = 'dataset/Image'                        # Enter the directory of the training images
 valid_path = 'dataset/Image'                        # Enter the directory of the validation images
 
-epochs = 10
+epochs = 200
 batch_size = 32
 image_size = 32
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 save_trained_model = False
+gpu_active = False
 
 
 def get_num_of_classes():
@@ -90,7 +92,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # model_, model_name = models.create_pretrained_model_densenet121()
 
     # load model that uses custom architecture
-    model_, model_name = models.create_custom_model_2d_cnn_v2()
+    model_, model_name = models.create_pretrained_model_densenet121()
 
     # View the structure of the model
     # model_.summary()
