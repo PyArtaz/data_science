@@ -1,3 +1,4 @@
+# ToDo: Update requirements.txt at the end of project
 import time
 from glob import glob
 import tensorflow as tf
@@ -22,9 +23,9 @@ chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you wan
 train_path = 'dataset/Image'                        # Enter the directory of the training images
 valid_path = 'dataset/Image'                        # Enter the directory of the validation images
 
-epochs = 200
+epochs = 20
 batch_size = 32
-image_size = 32
+image_size = 256
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 save_trained_model = False
 gpu_active = False
