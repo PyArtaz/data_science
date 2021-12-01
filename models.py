@@ -1,3 +1,10 @@
+# To filter Warnings and Information logs
+# 0 | DEBUG | [Default] Print all messages
+# 1 | INFO | Filter out INFO messages
+# 2 | WARNING | Filter out INFO & WARNING messages
+# 3 | ERROR | Filter out all messages
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from glob import glob
 import keras
 import keras.layers
@@ -11,21 +18,14 @@ from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, Add, Input, ZeroPadding2D, AveragePooling2D,GlobalAveragePooling2D
 import keras.optimizers
 import tensorflow as tf
+
 import train
+train_path = train.train_path
+image_size = train.image_size
+IMAGE_SIZE = train.IMAGE_SIZE
 
-# To filter Warnings and Information logs
-# 0 | DEBUG | [Default] Print all messages
-# 1 | INFO | Filter out INFO messages
-# 2 | WARNING | Filter out INFO & WARNING messages
-# 3 | ERROR | Filter out all messages
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-train_path = 'dataset/Image'
-#image_size = train.image_size
-#IMAGE_SIZE = train.IMAGE_SIZE
-image_size = 32
-IMAGE_SIZE = [image_size, image_size]
+crossentropy = 'categorical_crossentropy'
+activation = 'softmax'
 
 
 def get_num_of_classes():
@@ -51,14 +51,15 @@ def create_pretrained_model_densenet121():
 
     # output layers - you can add more if you want
     x = Flatten()(vgg.output)
-    # x = Dense(1000, activation='relu')(x)
-    prediction = Dense(num_of_classes, activation='softmax', name='predictions')(x)
+    x = Dense(1024, activation='relu')(x)        # 1000
+    prediction = Dense(num_of_classes, activation=activation, name='predictions')(x)
 
     # create a model object
     model = Model(inputs=vgg.input, outputs=prediction)
 
     # tell the model what cost and optimization method to use
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    adam = tf.keras.optimizers.Adam(learning_rate=0.001)
+    model.compile(loss=crossentropy, optimizer=adam, metrics=['accuracy'])
 
     return model, 'pretrained_model_densenet121'
 
@@ -68,13 +69,25 @@ Source: https://github.com/krishnasahu29/SignLanguageRecognition/blob/main/vgg16
 '''
 def create_pretrained_model_vgg():
     num_of_classes = get_num_of_classes()
-    adam = tf.keras.optimizers.Adam(learning_rate=0.001)
-    model = tf.keras.Sequential()
-    model.add(VGG16(weights='imagenet', include_top=False, input_shape=[image_size, image_size, 3]))
-    model.add(Flatten())
-    model.add(Dense(256, activation='relu'))
-    model.add(Dense(num_of_classes, activation='softmax'))
-    model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model = VGG16(weights='imagenet', include_top=False, input_shape=[image_size, image_size, 3])
+
+    # mark loaded layers as not trainable
+    for layer in model.layers:
+        layer.trainable = False
+
+    # add new classifier layers
+    flat = Flatten()(model.layers[-1].output)
+    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)     # 128
+    output = Dense(num_of_classes, activation=activation)(dense)
+
+    # define new model
+    model = Model(inputs=model.inputs, outputs=output)
+    # compile model
+    opt = tf.optimizers.SGD(learning_rate=0.001, momentum=0.9)          # ToDo: try different optimizers
+    # opt = tf.keras.optimizers.Adam(learning_rate=0.001)
+    model.compile(optimizer=opt, loss=crossentropy, metrics=['accuracy'])
+
     return model, 'pretrained_model_vgg'
 
 
@@ -112,10 +125,11 @@ def create_pretrained_model_inception_v3():
     x = layers.GlobalAveragePooling2D()(inception_output)
     x = layers.Dense(1024, activation='relu')(x)
     # Not required --> x = layers.Dropout(0.2)(x)
-    x = layers.Dense(num_of_classes, activation='softmax')(x)
+    x = layers.Dense(num_of_classes, activation=activation)(x)
 
     model = Model(inception_v3_model.input, x)
-    model.compile(optimizer=SGD(learning_rate=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['acc'])
+    #model.compile(optimizer=SGD(learning_rate=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['acc'])
+    model.compile(loss=crossentropy, optimizer='adam', metrics=['accuracy'])
 
     return model, 'pretrained_model_inception_v3'
 
@@ -177,9 +191,9 @@ def create_custom_model_2d_cnn():
     model.add(Dropout(0.2))
     model.add(Dense(2048, activation='relu'))
     model.add(Dropout(0.1))
-    model.add(Dense(num_of_classes, activation='softmax'))
+    model.add(Dense(num_of_classes, activation=activation))
 
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=crossentropy, optimizer='adam', metrics=['accuracy'])
     return model, 'custom_model_2d_cnn'
 
 
@@ -187,16 +201,16 @@ def create_custom_model_2d_cnn():
 def create_custom_model_2d_cnn_v2():
     num_of_classes = get_num_of_classes()
     model = Sequential()
-    model.add(Conv2D(16, (2,2), input_shape=[image_size, image_size, 3], activation='relu'))
+    model.add(Conv2D(128, (2,2), input_shape=[image_size, image_size, 3], activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
-    model.add(Conv2D(32, (3,3), activation='relu'))
+    model.add(Conv2D(128, (3,3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), padding='same'))
-    model.add(Conv2D(64, (5,5), activation='relu'))
+    model.add(Conv2D(256, (5,5), activation='relu'))
     model.add(MaxPooling2D(pool_size=(5, 5), strides=(5, 5), padding='same'))
     model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     model.add(Dropout(0.2))
-    model.add(Dense(num_of_classes, activation='softmax'))
+    model.add(Dense(num_of_classes, activation=activation))
     sgd = tf.optimizers.SGD(learning_rate=1e-2)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
+    model.compile(loss=crossentropy, optimizer=sgd, metrics=['accuracy'])
     return model, 'custom_model_2d_cnn_v2'

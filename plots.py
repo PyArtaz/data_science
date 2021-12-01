@@ -1,7 +1,3 @@
-import matplotlib.pyplot as plt
-from keras.utils.vis_utils import plot_model
-from sklearn.metrics import roc_curve
-
 # To filter Warnings and Information logs
 # 0 | DEBUG | [Default] Print all messages
 # 1 | INFO | Filter out INFO messages
@@ -9,6 +5,10 @@ from sklearn.metrics import roc_curve
 # 3 | ERROR | Filter out all messages
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import matplotlib.pyplot as plt
+from keras.utils.vis_utils import plot_model
+from sklearn.metrics import roc_curve
+
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -20,9 +20,8 @@ def plot_model_structure(model_, detailed_model_name):
     plot_model(model_, to_file='dataset/diagrams/' + detailed_model_name + '.png', show_shapes=True, show_layer_names=True)  # , rankdir='LR')  # for horizontal direction
 
 
-# ToDo: save plots with detailed_model_name
 # Plot the model Accuracy graph
-def plot_training_history(history):
+def plot_training_history(history, filename):
     fig, (ax1, ax2) = plt.subplots(2)
     fig.suptitle('Training and Validation loss')
 
@@ -51,10 +50,11 @@ def plot_training_history(history):
     ax2.grid(which='minor', linestyle=':', linewidth='0.5', color='black')      # Customize the minor grid
 
     fig.tight_layout()
-    plt.show()
+    plt.savefig(filename=filename)
+    # plt.show()
 
 
-def plot_metrics(history):
+def plot_metrics(history, filename):
     metrics = ['accuracy', 'loss']  #, 'precision', 'recall']
 
     for n, metric in enumerate(metrics):
@@ -73,7 +73,8 @@ def plot_metrics(history):
 
         plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig(filename=filename)
+    # plt.show()
 
 
 def plot_roc(name, labels, predictions, **kwargs):

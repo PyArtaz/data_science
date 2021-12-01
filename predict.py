@@ -1,10 +1,3 @@
-import tensorflow as tf
-from keras.models import model_from_json
-from train import load_images
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
-import matplotlib.pyplot as plt
-import plots
-
 # To filter Warnings and Information logs
 # 0 | DEBUG | [Default] Print all messages
 # 1 | INFO | Filter out INFO messages
@@ -12,28 +5,40 @@ import plots
 # 3 | ERROR | Filter out all messages
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
+from keras.models import model_from_json
+from train import load_training_images
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
+import plots
+
+import matplotlib.pyplot as plt
+import preprocessing as prep
 
 
-# File path
+test_directory = '../workspace/'
+# Model file path
 filepath = 'dataset/saved_model/'
 labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
           'AE', 'OE', 'UE', 'SCH', 'One', 'Two', 'Three', 'Four', 'Five']
 
+# load test images
+test_generator = prep.load_test_images(test_directory)
 
-# load json and create model
-json_file = open(filepath + 'model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-loaded_model = model_from_json(loaded_model_json)
-# load weights into new model
-loaded_model.load_weights(filepath + 'model.h5')
-print("Loaded model from disk")
+# if you forget to reset the test_generator you will get outputs in a weird order
+test_generator.reset()
 
-# A few random samples
-train_generator, valid_generator, test_generator = load_images()
+# load and create latest created model
+model = prep.load_latest_model()
+
+# tell the model what cost and optimization method to use
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# division by the number of images in each subfolder provides one classification for all images
+steps_per_epoch = test_generator.n // test_generator.batch_size
 
 # Generate predictions for samples
-predictions = loaded_model.predict(test_generator)  # , num_of_test_samples // batch_size+1)
+predictions = model.predict(test_generator, steps=steps_per_epoch, verbose=1)
 
 num_of_test_samples = test_generator.samples
 batch_size = 32
@@ -50,10 +55,4 @@ plt.show()
 
 print('Classification Report')
 print(classification_report(test_generator.classes, predicted_categories, target_names=labels))
-
-#ToDo: Plot ROC curve
-#plots.plot_roc("Train Baseline", train_labels, train_predictions_baseline, color=colors[0])
-#plots.plot_roc("Test Baseline", test_labels, test_predictions_baseline, color=colors[0], linestyle='--')
-#plots.plot_roc("Test Baseline", test_generator.classes, predicted_categories, color=plots.colors[0], linestyle='--')
-#plt.legend(loc='lower right')
 
