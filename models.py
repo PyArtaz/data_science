@@ -26,7 +26,8 @@ IMAGE_SIZE = train.IMAGE_SIZE
 
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
-
+#optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
+optimizer = tf.optimizers.SGD(learning_rate=0.0001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
 
 def get_num_of_classes():
     return len(glob(train_path + '/*'))
@@ -58,8 +59,7 @@ def create_pretrained_model_densenet121():
     model = Model(inputs=vgg.input, outputs=prediction)
 
     # tell the model what cost and optimization method to use
-    adam = tf.keras.optimizers.Adam(learning_rate=0.001)
-    model.compile(loss=crossentropy, optimizer=adam, metrics=['accuracy'])
+    model.compile(loss=crossentropy, optimizer=optimizer, metrics=['accuracy'])
 
     return model, 'pretrained_model_densenet121'
 
@@ -84,9 +84,7 @@ def create_pretrained_model_vgg():
     # define new model
     model = Model(inputs=model.inputs, outputs=output)
     # compile model
-    opt = tf.optimizers.SGD(learning_rate=0.001, momentum=0.9)          # ToDo: try different optimizers
-    # opt = tf.keras.optimizers.Adam(learning_rate=0.001)
-    model.compile(optimizer=opt, loss=crossentropy, metrics=['accuracy'])
+    model.compile(optimizer=optimizer, loss=crossentropy, metrics=['accuracy'])
 
     return model, 'pretrained_model_vgg'
 
@@ -128,8 +126,7 @@ def create_pretrained_model_inception_v3():
     x = layers.Dense(num_of_classes, activation=activation)(x)
 
     model = Model(inception_v3_model.input, x)
-    #model.compile(optimizer=SGD(learning_rate=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['acc'])
-    model.compile(loss=crossentropy, optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=crossentropy, optimizer=optimizer, metrics=['accuracy'])
 
     return model, 'pretrained_model_inception_v3'
 

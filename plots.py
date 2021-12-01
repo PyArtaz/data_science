@@ -50,8 +50,8 @@ def plot_training_history(history, filename):
     ax2.grid(which='minor', linestyle=':', linewidth='0.5', color='black')      # Customize the minor grid
 
     fig.tight_layout()
-    plt.savefig(filename=filename)
-    # plt.show()
+    plt.savefig(filename, dpi=fig.dpi)
+    plt.show()
 
 
 def plot_metrics(history, filename):
@@ -73,8 +73,8 @@ def plot_metrics(history, filename):
 
         plt.legend()
     plt.tight_layout()
-    plt.savefig(filename=filename)
-    # plt.show()
+    plt.savefig(filename)
+    plt.show()
 
 
 def plot_roc(name, labels, predictions, **kwargs):

@@ -23,16 +23,12 @@ import matplotlib as plt
 chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
 train_path = 'dataset/asl_alphabet_train'                        # Enter the directory of the training images
 
-epochs = 1
-batch_size = 64
+epochs = 2
+batch_size = 32
 image_size = 75
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
-save_trained_model = False
-color_mode = 'grayscale'  # 'rgb'
-
-
-def get_num_of_classes():
-    return len(glob(train_path + '/*'))
+save_trained_model = True
+color_mode = 'rgb'  # 'grayscale'  # 'rgb'   # mit color_mode='grayscale' passen die 1 dimensionalen Bilder nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
 
 
 # ToDo: get grayscale as image preprocessing function working
@@ -119,6 +115,8 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
 
     # View the structure of the model
     # model_.summary()
+
+    print("Begin training of: " + model_name + "-num_epochs_" + str(epochs) + "-batch_size_" + str(batch_size) + "-image_size_" + str(image_size))
 
     # Train the model
     history, model = train_model(model_, train_generator, valid_generator)

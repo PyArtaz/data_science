@@ -19,8 +19,10 @@ import preprocessing as prep
 test_directory = '../workspace/'
 # Model file path
 filepath = 'dataset/saved_model/'
-labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-          'AE', 'OE', 'UE', 'SCH', 'One', 'Two', 'Three', 'Four', 'Five']
+labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+          'A', 'B', 'C', 'D', 'del', 'E', 'F', 'G', 'H', 'I',
+          'J', 'K', 'L', 'M', 'N', 'nothing', 'O', 'P', 'Q', 'R',
+          'S', 'space', 'T', 'U', 'unknown', 'V', 'W', 'X', 'Y', 'Z']  # missing: 'AE', 'OE', 'UE', 'SCH'
 
 # load test images
 test_generator = prep.load_test_images(test_directory)
