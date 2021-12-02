@@ -26,8 +26,8 @@ IMAGE_SIZE = train.IMAGE_SIZE
 
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
-#optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
-optimizer = tf.optimizers.SGD(learning_rate=0.0001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
+#optimizer = tf.optimizers.SGD(learning_rate=0.0001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
 
 def get_num_of_classes():
     return len(glob(train_path + '/*'))
@@ -42,21 +42,24 @@ def create_pretrained_model_densenet121():
     # ToDo: search in literature for suitable model architectures
 
     # add preprocessing layer to the front of VGG
-    vgg = DenseNet121(input_shape=IMAGE_SIZE + [3], weights='imagenet', include_top=False)
+    densenet = DenseNet121(input_shape=IMAGE_SIZE + [3], weights='imagenet', include_top=False)
 
     # don't train existing weights
-    for layer in vgg.layers:
+    for layer in densenet.layers:
         layer.trainable = False
+
+    for i, layer in enumerate(densenet.layers):
+        print(i, layer.name, layer.trainable)
 
     num_of_classes = get_num_of_classes()
 
     # output layers - you can add more if you want
-    x = Flatten()(vgg.output)
-    x = Dense(1024, activation='relu')(x)        # 1000
+    x = Flatten()(densenet.output)
+    x = Dense(512, activation='relu')(x)        # 1000
     prediction = Dense(num_of_classes, activation=activation, name='predictions')(x)
 
     # create a model object
-    model = Model(inputs=vgg.input, outputs=prediction)
+    model = Model(inputs=densenet.input, outputs=prediction)
 
     # tell the model what cost and optimization method to use
     model.compile(loss=crossentropy, optimizer=optimizer, metrics=['accuracy'])
@@ -73,13 +76,19 @@ def create_pretrained_model_vgg():
     model = VGG16(weights='imagenet', include_top=False, input_shape=[image_size, image_size, 3])
 
     # mark loaded layers as not trainable
-    for layer in model.layers:
+    for layer in model.layers[:-1]:
         layer.trainable = False
+
+    for i, layer in enumerate(model.layers):
+        print(i, layer.name, layer.trainable)
 
     # add new classifier layers
     flat = Flatten()(model.layers[-1].output)
+    #dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
+    #drop1 = Dropout(0.5)(dense1)
     dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)     # 128
-    output = Dense(num_of_classes, activation=activation)(dense)
+    #drop2 = Dropout(0.5)(dense)
+    output = Dense(num_of_classes, activation=activation)(dense)  # (drop2)
 
     # define new model
     model = Model(inputs=model.inputs, outputs=output)
@@ -107,11 +116,14 @@ def create_pretrained_model_inception_v3():
     for layer in inception_v3_model.layers[249:]:
         layer.trainable = True
 
+    for i, layer in enumerate(inception_v3_model.layers):
+        print(i, layer.name, layer.trainable)
+
     # Choosing the inception output layer:
 
     # Choosing the output layer to be merged with our FC layers (if required)
     inception_output_layer = inception_v3_model.get_layer('mixed7')
-    print('Inception model output shape:', inception_output_layer.output_shape)
+    # print('Inception model output shape:', inception_output_layer.output_shape)
 
     # Not required --> inception_output = inception_output_layer.output
     inception_output = inception_v3_model.output
@@ -121,7 +133,7 @@ def create_pretrained_model_inception_v3():
     from tensorflow.keras.optimizers import RMSprop, Adam, SGD
 
     x = layers.GlobalAveragePooling2D()(inception_output)
-    x = layers.Dense(1024, activation='relu')(x)
+    x = layers.Dense(256, activation='relu')(x)
     # Not required --> x = layers.Dropout(0.2)(x)
     x = layers.Dense(num_of_classes, activation=activation)(x)
 

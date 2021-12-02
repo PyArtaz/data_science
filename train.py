@@ -11,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 from sklearn.utils import class_weight
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 import plots
 import models
 import matplotlib as plt
@@ -23,9 +23,9 @@ import matplotlib as plt
 chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
 train_path = 'dataset/asl_alphabet_train'                        # Enter the directory of the training images
 
-epochs = 2
+epochs = 3
 batch_size = 32
-image_size = 75
+image_size = 100
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 save_trained_model = True
 color_mode = 'rgb'  # 'grayscale'  # 'rgb'   # mit color_mode='grayscale' passen die 1 dimensionalen Bilder nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
@@ -59,27 +59,32 @@ def load_training_images():
                                                     subset='validation',
                                                     class_mode='categorical')
 
-    class_occurences = dict(zip(*np.unique(train_generator.classes, return_counts=True)))
-    print("class_occurences: \t" + str(class_occurences))
+    #class_occurences = dict(zip(*np.unique(train_generator.classes, return_counts=True)))
+    #print("class_occurences: \t" + str(class_occurences))
 
     return train_generator, valid_generator
 
 
 # Train the model
 def train_model(model, train_generator, valid_generator):
+    # used to save checkpoints during training after each epoch
     checkpoint = ModelCheckpoint(chkp_filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
-    callbacks_list = [checkpoint]       # used to save checkpoints during training after each epoch
+    # simple early stopping
+    es_val_loss = EarlyStopping(monitor='val_loss', mode='min', patience=5, verbose=1, restore_best_weights=True)
+    es_val_acc  = EarlyStopping(monitor='val_accuracy', patience=5, min_delta=0.01, mode='max', restore_best_weights=True)  # val_acc has to improve by at least 0.1 for it to count as an improvement
+    callbacks_list = [checkpoint, es_val_acc]
 
     trainings_samples = train_generator.samples
     validation_samples = valid_generator.samples
 
+    # calculate class_weights of unbalanced data
     class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(train_generator.classes), y=train_generator.classes)
     train_class_weights = dict(zip(np.unique(train_generator.classes), class_weights))
 
-    print("train_class_weights: \t" + str(train_class_weights))
+    #print("train_class_weights: \t" + str(train_class_weights))
 
     r = model.fit(train_generator, validation_data=valid_generator, epochs=epochs, class_weight=train_class_weights,
-                  steps_per_epoch=trainings_samples // batch_size, validation_steps=validation_samples // batch_size)  # , callbacks=callbacks_list,
+                  steps_per_epoch=trainings_samples // batch_size, validation_steps=validation_samples // batch_size) #, callbacks=callbacks_list)  # , callbacks=callbacks_list,
 
     return r, model
 
@@ -107,7 +112,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     train_generator, valid_generator = load_training_images()
 
     # load model that uses transfer learning
-    model_, model_name = models.create_pretrained_model_inception_v3()
+    model_, model_name = models.create_pretrained_model_vgg()
 
     # load model that uses custom architecture
     # model_, model_name = models.create_custom_model_1d_cnn()
@@ -129,8 +134,8 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
                           + "-num_epochs_" + str(epochs) \
                           + "-batch_size_" + str(batch_size) \
                           + "-image_size_" + str(image_size) \
-                          + "-acc_" + str(round(history.history['accuracy'][-1], 4)) \
-                          + "-val_acc_" + str(round(history.history['val_accuracy'][-1], 4))
+                          #+ "-acc_" + str(round(history.history['accuracy'][-1], 4)) \
+                          #+ "-val_acc_" + str(round(history.history['val_accuracy'][-1], 4))
 
     if save_trained_model:
         save_model(model, detailed_model_name)
