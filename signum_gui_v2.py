@@ -21,7 +21,7 @@ IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
 bottom_left, bottom_right = 150, 150
 
 model_directory = 'dataset/saved_model/'
-model_name = '20211204-200825-pretrained_model_vgg-num_epochs_3-batch_size_32-image_size_64-acc_0_9065-val_acc_0_8569'
+model_name = 'pretrained_model_vgg-num_epochs_3-batch_size_32-image_size_64-acc_0_9065-val_acc_0_8569'
 alphabet = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 #alphabet = ['A', 'B', 'C', 'del', 'I', 'J', 'S', 'space', 'T', 'Z']
 
