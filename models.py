@@ -13,16 +13,19 @@ from keras.applications.densenet import DenseNet121
 from keras.applications.vgg16 import VGG16
 from keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras import layers
-from tensorflow.keras import Model
+from tensorflow.keras.models import Model
 from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool1D, Flatten, Conv2D, MaxPool2D, BatchNormalization, MaxPooling2D
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, Add, Input, ZeroPadding2D, AveragePooling2D,GlobalAveragePooling2D
 import keras.optimizers
 import tensorflow as tf
 
-import train
-train_path = train.train_path
-image_size = train.image_size
-IMAGE_SIZE = train.IMAGE_SIZE
+import preprocessing as prep
+train_path = prep.train_path
+image_size = prep.image_size
+IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
+
+image_size = 100
+IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
@@ -48,8 +51,8 @@ def create_pretrained_model_densenet121():
     for layer in densenet.layers:
         layer.trainable = False
 
-    for i, layer in enumerate(densenet.layers):
-        print(i, layer.name, layer.trainable)
+    #for i, layer in enumerate(densenet.layers):
+    #    print(i, layer.name, layer.trainable)
 
     num_of_classes = get_num_of_classes()
 
@@ -79,16 +82,16 @@ def create_pretrained_model_vgg():
     for layer in model.layers[:-1]:
         layer.trainable = False
 
-    for i, layer in enumerate(model.layers):
-        print(i, layer.name, layer.trainable)
+    #for i, layer in enumerate(model.layers):
+    #    print(i, layer.name, layer.trainable)
 
     # add new classifier layers
     flat = Flatten()(model.layers[-1].output)
-    #dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
-    #drop1 = Dropout(0.5)(dense1)
-    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)     # 128
-    #drop2 = Dropout(0.5)(dense)
-    output = Dense(num_of_classes, activation=activation)(dense)  # (drop2)
+    dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
+    drop1 = Dropout(0.5)(dense1)
+    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(drop1)  # (flat)     # 128
+    drop2 = Dropout(0.5)(dense)
+    output = Dense(num_of_classes, activation=activation)(drop2)  # (dense)  # (drop2)
 
     # define new model
     model = Model(inputs=model.inputs, outputs=output)
@@ -223,3 +226,44 @@ def create_custom_model_2d_cnn_v2():
     sgd = tf.optimizers.SGD(learning_rate=1e-2)
     model.compile(loss=crossentropy, optimizer=sgd, metrics=['accuracy'])
     return model, 'custom_model_2d_cnn_v2'
+
+'''
+Source: https://stackoverflow.com/questions/60295760/detecting-and-tracking-the-human-hand-with-opencv
+'''
+def create_custom_model_2d_cnn_v3():
+    num_of_classes = get_num_of_classes()
+
+    i = Input(shape=[image_size, image_size, 3])
+    x = Conv2D(32, (3, 3), activation='relu', padding='same')(i)
+    x = BatchNormalization()(x)
+    x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling2D((2, 2))(x)
+    # x = Dropout(0.2)(x)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling2D((2, 2))(x)
+    # x = Dropout(0.2)(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling2D((2, 2))(x)
+    # x = Dropout(0.2)(x)
+
+    # x = GlobalMaxPooling2D()(x)
+    x = Flatten()(x)
+    x = Dropout(0.2)(x)
+    x = Dense(1024, activation='relu')(x)
+    x = Dropout(0.2)(x)
+    x = Dense(1024, activation='relu')(x)
+    x = Dropout(0.2)(x)
+    x = Dense(num_of_classes, activation='softmax')(x)
+
+    model = Model(i, x)
+
+    model.compile(loss=crossentropy, optimizer=optimizer, metrics=['accuracy'])     # optimizer = 'SGD'
+
+    return model, 'custom_model_2d_cnn_v3'

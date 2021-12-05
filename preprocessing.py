@@ -3,10 +3,14 @@ from keras.models import model_from_json
 import glob
 from keras.preprocessing.image import ImageDataGenerator
 
-import train
-train_path = train.train_path
-image_size = train.image_size
-IMAGE_SIZE = train.IMAGE_SIZE
+#import train
+#train_path = train.train_path
+#image_size = train.image_size
+#IMAGE_SIZE = train.IMAGE_SIZE
+
+train_path = 'dataset/digits'                        # Enter the directory of the training images
+image_size = 100
+IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 
 
 def load_latest_model():
@@ -25,7 +29,7 @@ def load_latest_model():
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
     loaded_model.load_weights(filepath + model_name + '.h5')
-    print("Loaded model from disk")
+    print("Loaded model from disk: " + model_name)
 
     return loaded_model
 
