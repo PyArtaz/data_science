@@ -111,8 +111,8 @@ def load_training_images():
                                                         shuffle=True,
                                                         batch_size=batch_size,
                                                         subset='training',
-                                                        class_mode='categorical',
-                                                        save_to_dir=(train_path+'_augmented'))
+                                                        class_mode='categorical')
+                                                        # save_to_dir=(train_path+'_augmented'))
 
         valid_generator = val_gen.flow_from_directory(train_path,
                                                       target_size=IMAGE_SIZE,
