@@ -24,13 +24,10 @@ train_path = prep.train_path
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
 
-image_size = 100
-IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
-
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
-#optimizer = tf.optimizers.SGD(learning_rate=0.0001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
+# optimizer = tf.optimizers.SGD(learning_rate=0.001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
 
 def get_num_of_classes():
     return len(glob(train_path + '/*'))
@@ -87,11 +84,11 @@ def create_pretrained_model_vgg():
 
     # add new classifier layers
     flat = Flatten()(model.layers[-1].output)
-    dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
-    drop1 = Dropout(0.5)(dense1)
-    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(drop1)  # (flat)     # 128
-    drop2 = Dropout(0.5)(dense)
-    output = Dense(num_of_classes, activation=activation)(drop2)  # (dense)  # (drop2)
+    #dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
+    #drop1 = Dropout(0.5)(dense1)
+    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)  # (flat) # (drop1)      # 128
+    #drop2 = Dropout(0.5)(dense)
+    output = Dense(num_of_classes, activation=activation)(dense)  # (dense)  # (drop2)
 
     # define new model
     model = Model(inputs=model.inputs, outputs=output)

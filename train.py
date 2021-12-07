@@ -25,13 +25,15 @@ import pandas as pd
 chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
 train_path = prep.train_path                        # Enter the directory of the training images
 
-epochs = 20
+epochs = 50
 batch_size = 32
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
 save_trained_model = True
 color_mode = 'rgb'  # 'grayscale'  # 'rgb'   # mit color_mode='grayscale' passen die 1 dimensionalen Bilder nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
 
+use_reduced_dataset = False
+num_train_images = 100
 
 # ToDo: get grayscale as image preprocessing function working
 def to_grayscale_then_rgb(image):
@@ -64,56 +66,61 @@ def subset_training_images(num_train_images):
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
 def load_training_images():
+    # ToDo: find good parameters. fill_mode nearest produces strange results with fingers
     train_gen = ImageDataGenerator(rescale=1. / 255.,
                                    rotation_range=20,
                                    width_shift_range=0.2,
                                    height_shift_range=0.2,
                                    shear_range=0.2,
                                    zoom_range=0.2,
+                                   brightness_range=[0.8, 1.2],
                                    fill_mode='nearest',
-                                   validation_split=0.2)  # horizontal_flip=True,# , preprocessing_function=to_grayscale_then_rgb)  # , label_mode='categorical')  # rescale=1./255 to scale colors to values between [0,1]
+                                   validation_split=0.2)  # brightness_range=[0.8, 1.2], # horizontal_flip=True,# , preprocessing_function=to_grayscale_then_rgb)  # , label_mode='categorical')  # rescale=1./255 to scale colors to values between [0,1]
 
     val_gen = ImageDataGenerator(rescale=1. / 255.,
                                  validation_split=0.2)
 
-    #df = subset_training_images(num_train_images=5000)
-    #train_generator = train_gen.flow_from_dataframe(directory=train_path,
-    #                                                dataframe=df,
-    #                                                x_col="Images",
-    #                                                y_col="Labels",
-    #                                                class_mode="categorical",
-    #                                                batch_size=batch_size,
-    #                                                target_size=IMAGE_SIZE,
-    #                                                color_mode=color_mode,
-    #                                                shuffle=True,
-    #                                                subset='training')
-#
-    #valid_generator = val_gen.flow_from_dataframe(directory=train_path,
-    #                                                dataframe=df,
-    #                                                x_col="Images",
-    #                                                y_col="Labels",
-    #                                                class_mode="categorical",
-    #                                                batch_size=batch_size,
-    #                                                target_size=IMAGE_SIZE,
-    #                                                color_mode=color_mode,
-    #                                                shuffle=True,
-    #                                                subset='validation')
+    if use_reduced_dataset:
+        df = subset_training_images(num_train_images=num_train_images)
+        train_generator = train_gen.flow_from_dataframe(directory=train_path,
+                                                        dataframe=df,
+                                                        x_col="Images",
+                                                        y_col="Labels",
+                                                        class_mode="categorical",
+                                                        batch_size=batch_size,
+                                                        target_size=IMAGE_SIZE,
+                                                        color_mode=color_mode,
+                                                        shuffle=True,
+                                                        subset='training')
 
-    train_generator = train_gen.flow_from_directory(train_path,
-                                                    target_size=IMAGE_SIZE,
-                                                    color_mode=color_mode,
-                                                    shuffle=True,
-                                                    batch_size=batch_size,
-                                                    subset='training',
-                                                    class_mode='categorical')
+        # ToDo: find error why val_acc & val_loss are not computed when using flow_from_dataframe
+        valid_generator = val_gen.flow_from_dataframe(directory=train_path,
+                                                      dataframe=df,
+                                                      x_col="Images",
+                                                      y_col="Labels",
+                                                      class_mode="categorical",
+                                                      batch_size=batch_size,
+                                                      target_size=IMAGE_SIZE,
+                                                      color_mode=color_mode,
+                                                      shuffle=True,
+                                                      subset='validation')
+    else:
+        train_generator = train_gen.flow_from_directory(train_path,
+                                                        target_size=IMAGE_SIZE,
+                                                        color_mode=color_mode,
+                                                        shuffle=True,
+                                                        batch_size=batch_size,
+                                                        subset='training',
+                                                        class_mode='categorical',
+                                                        save_to_dir=(train_path+'_augmented'))
 
-    valid_generator = val_gen.flow_from_directory(train_path,
-                                                  target_size=IMAGE_SIZE,
-                                                  color_mode=color_mode,
-                                                  shuffle=True,
-                                                  batch_size=batch_size,
-                                                  subset='validation',
-                                                  class_mode='categorical')
+        valid_generator = val_gen.flow_from_directory(train_path,
+                                                      target_size=IMAGE_SIZE,
+                                                      color_mode=color_mode,
+                                                      shuffle=True,
+                                                      batch_size=batch_size,
+                                                      subset='validation',
+                                                      class_mode='categorical')
 
     return train_generator, valid_generator
 
@@ -141,7 +148,7 @@ def train_model(model, train_generator, valid_generator):
     print("train_class_weights: \t" + str(train_class_weights))
 
     r = model.fit(train_generator, validation_data=valid_generator, epochs=epochs, class_weight=train_class_weights,
-                  steps_per_epoch=trainings_samples // batch_size, validation_steps=validation_samples // batch_size, callbacks=callbacks_list)  # , callbacks=callbacks_list,
+                  steps_per_epoch=trainings_samples // batch_size, validation_steps=validation_samples // batch_size)  # , callbacks=callbacks_list)  # , callbacks=callbacks_list,
 
     return r, model
 
@@ -170,17 +177,21 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
 
     # load model that uses transfer learning
     model_, model_name = models.create_pretrained_model_vgg()
-    # model_, model_name = models.create_pretrained_model_densenet121()
 
     # load model that uses custom architecture
-    # model_, model_name = models.create_custom_model_1d_cnn()
-    # model_, model_name = models.create_custom_model_2d_cnn()
+    # model_, model_name = models.create_custom_model_2d_cnn_v2()
     # model_, model_name = models.create_custom_model_2d_cnn_v3()
 
     # View the structure of the model
     # model_.summary()
 
-    print("Begin training of: " + model_name + "-num_epochs_" + str(epochs) + "-batch_size_" + str(batch_size) + "-image_size_" + str(image_size))
+    print("Begin training of: "
+          + timestr
+          + "-" + model_name
+          + "-dataset_" + prep.dataset
+          + "-num_epochs_" + str(epochs)
+          + "-batch_size_" + str(batch_size)
+          + "-image_size_" + str(image_size))
 
     # Train the model
     history, model = train_model(model_, train_generator, valid_generator)
@@ -188,13 +199,26 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     pred_time = time.time() - start_time
     print("\nRuntime", pred_time, "s")
 
-    detailed_model_name = timestr \
-                          + "-" + model_name \
-                          + "-num_epochs_" + str(epochs) \
-                          + "-batch_size_" + str(batch_size) \
-                          + "-image_size_" + str(image_size) \
-                          #+ "-acc_" + str(round(history.history['accuracy'][-1], 4)) \
-                          #+ "-val_acc_" + str(round(history.history['val_accuracy'][-1], 4))
+    if use_reduced_dataset:
+        detailed_model_name = timestr \
+                              + "-" + model_name \
+                              + "-dataset_" + prep.dataset \
+                              + "-num_epochs_" + str(epochs) \
+                              + "-batch_size_" + str(batch_size) \
+                              + "-image_size_" + str(image_size) \
+                              + "-acc_" + str(round(history.history['accuracy'][-1], 4)).replace('.', '_') \
+                              + "-loss_" + str(round(history.history['loss'][-1], 4)).replace('.', '_')
+    else:
+        detailed_model_name = timestr \
+                              + "-" + model_name \
+                              + "-dataset_" + prep.dataset \
+                              + "-num_epochs_" + str(epochs) \
+                              + "-batch_size_" + str(batch_size) \
+                              + "-image_size_" + str(image_size) \
+                              + "-acc_" + str(round(history.history['accuracy'][-1], 4)).replace('.', '_') \
+                              + "-loss_" + str(round(history.history['loss'][-1], 4)).replace('.', '_') \
+                              + "-val_acc_" + str(round(history.history['val_accuracy'][-1], 4)).replace('.', '_') \
+                              + "-val_loss_" + str(round(history.history['val_loss'][-1], 4)).replace('.', '_')
 
     if save_trained_model:
         save_model(model, detailed_model_name)
@@ -207,8 +231,10 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     if not os.path.exists(plot_directory):
         os.makedirs(plot_directory)
 
-    # # Plot the model accuracy graph
-    # plots.plot_training_history(history, plot_directory + detailed_model_name)
-    # # Plot the model accuracy and loss metrics
-    # plots.plot_metrics(history, plot_directory + detailed_model_name)
+    # only plot statistics if whole dataset is used, otherwise history is missing val_acc & val_loss
+    if not use_reduced_dataset:
+        # Plot the model accuracy graph
+        plots.plot_training_history(history, plot_directory + detailed_model_name)
+        # Plot the model accuracy and loss metrics
+        # plots.plot_metrics(history, plot_directory + detailed_model_name)
 

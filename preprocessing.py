@@ -1,14 +1,11 @@
 import os
-from keras.models import model_from_json
 import glob
+from keras.models import model_from_json
 from keras.preprocessing.image import ImageDataGenerator
 
-#import train
-#train_path = train.train_path
-#image_size = train.image_size
-#IMAGE_SIZE = train.IMAGE_SIZE
-
 train_path = 'dataset/digits'                        # Enter the directory of the training images
+dataset = train_path.split('/')[-1]
+
 image_size = 100
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 
