@@ -105,12 +105,12 @@ class working1(QThread):
                 gray_3_dim = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
                 if debug: cv2.imshow('gray',gray_3_dim)
 
-                alpha = self.classify(gray_3_dim)  # (roi)  # use (gray_3_dim) to use model to classify graysscale images or (roi) for rgb images
+                prediction = self.classify(gray_3_dim)  # (roi)  # use (gray_3_dim) to use model to classify graysscale images or (roi) for rgb images
 
                 # show rectangle with prediction area and predicted label on screen
                 cv2.rectangle(img, (right, top), (left, bottom), (0, 255, 0), 2)
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                cv2.putText(img, alpha, (0, 430), font, 5, (0, 0, 255), 2)
+                cv2.putText(img, prediction, (0, 430), font, 5, (0, 0, 255), 2)
 
                 # show image in QT GUI
                 #img = cv2.flip(img, 1)
