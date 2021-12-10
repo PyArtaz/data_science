@@ -4,6 +4,7 @@
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 from glob import glob
@@ -18,22 +19,22 @@ import matplotlib as plt
 import preprocessing as prep
 import pandas as pd
 
-
 # gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
 # session = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
-chkp_filepath = 'dataset/saved_model/checkpoints'   # Enter the filename you want your model to be saved as
-train_path = prep.train_path                        # Enter the directory of the training images
+chkp_filepath = 'dataset/saved_model/checkpoints'  # Enter the filename you want your model to be saved as
+train_path = prep.train_path  # Enter the directory of the training images
 
-epochs = 50
+epochs = 2
 batch_size = 32
 image_size = prep.image_size
-IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
+IMAGE_SIZE = prep.IMAGE_SIZE  # re-size all the images to this
 save_trained_model = True
 color_mode = 'rgb'  # 'grayscale'  # 'rgb'   # mit color_mode='grayscale' passen die 1 dimensionalen Bilder nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
 
 use_reduced_dataset = False
 num_train_images = 100
+
 
 # ToDo: get grayscale as image preprocessing function working
 def to_grayscale_then_rgb(image):
@@ -43,19 +44,22 @@ def to_grayscale_then_rgb(image):
     plt.show()
     return image
 
+
 # reduces the original training dataset and only loads as much "num_train_images" as given. This function is only for faster training purposes
 '''
 Source: https://stackoverflow.com/questions/58116359/is-there-a-simple-way-to-use-only-half-of-the-images-in-underlying-directories-u
 '''
+
+
 def subset_training_images(num_train_images):
     import os
     images = []
     labels = []
     for sub_dir in os.listdir(train_path):
-        image_list = os.listdir(os.path.join(train_path,sub_dir))  # list of all image names in the directory
-        image_list = list(map(lambda x:os.path.join(sub_dir,x),image_list))
+        image_list = os.listdir(os.path.join(train_path, sub_dir))  # list of all image names in the directory
+        image_list = list(map(lambda x: os.path.join(sub_dir, x), image_list))
         images.extend(image_list)
-        labels.extend([sub_dir]*len(image_list))
+        labels.extend([sub_dir] * len(image_list))
 
     df = pd.DataFrame({"Images": images, "Labels": labels})
     df = df.sample(frac=1).reset_index(drop=True)  # To shuffle the data # ToDo: subset df with equal class occurences
@@ -63,6 +67,12 @@ def subset_training_images(num_train_images):
     print(df)
 
     return df
+
+
+def check_folder(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
 def load_training_images():
@@ -112,7 +122,7 @@ def load_training_images():
                                                         batch_size=batch_size,
                                                         subset='training',
                                                         class_mode='categorical')
-                                                        # save_to_dir=(train_path+'_augmented'))
+        # save_to_dir=(train_path+'_augmented'))
 
         valid_generator = val_gen.flow_from_directory(train_path,
                                                       target_size=IMAGE_SIZE,
@@ -132,7 +142,8 @@ def train_model(model, train_generator, valid_generator):
     # simple early stopping
     es_acc = EarlyStopping(monitor='accuracy', patience=8, min_delta=0.1, mode='max', restore_best_weights=True)
     es_val_loss = EarlyStopping(monitor='val_loss', mode='min', patience=10, verbose=1, restore_best_weights=True)
-    es_val_acc  = EarlyStopping(monitor='val_accuracy', patience=10, min_delta=0.01, mode='max', restore_best_weights=True)  # val_acc has to improve by at least 0.1 for it to count as an improvement
+    es_val_acc = EarlyStopping(monitor='val_accuracy', patience=10, min_delta=0.01, mode='max',
+                               restore_best_weights=True)  # val_acc has to improve by at least 0.1 for it to count as an improvement
     callbacks_list = [checkpoint, es_acc]
 
     trainings_samples = train_generator.samples
@@ -143,21 +154,39 @@ def train_model(model, train_generator, valid_generator):
     print("class_occurences: \t" + str(class_occurences))
 
     # calculate class_weights of unbalanced data
-    class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(train_generator.classes), y=train_generator.classes)
+    class_weights = class_weight.compute_class_weight(class_weight='balanced',
+                                                      classes=np.unique(train_generator.classes),
+                                                      y=train_generator.classes)
     train_class_weights = dict(zip(np.unique(train_generator.classes), class_weights))
     print("train_class_weights: \t" + str(train_class_weights))
 
     r = model.fit(train_generator, validation_data=valid_generator, epochs=epochs, class_weight=train_class_weights,
-                  steps_per_epoch=trainings_samples // batch_size, validation_steps=validation_samples // batch_size)  # , callbacks=callbacks_list)  # , callbacks=callbacks_list,
+                  steps_per_epoch=trainings_samples // batch_size,
+                  validation_steps=validation_samples // batch_size)  # , callbacks=callbacks_list)  # , callbacks=callbacks_list,
 
     return r, model
+
+
+def create_model_name(info_dict):
+    return info_dict['Time'] + '-' + info_dict['Model name'] + '-dataset_' + info_dict['Used dataset']
+
+
+# Save a log file to accompany the saved model
+def save_model_log(log_dict, model_name):
+    model_directory = 'dataset/saved_model/'
+    check_folder(model_directory)
+
+    with open(model_directory + model_name + '_log.txt', 'w') as log_file:
+        for key, value in log_dict.items():
+            log_file.write('%s: %s\n' % (key, value))
+
+    print('\nSaved log file to disk')
 
 
 # Save the models and weight for future purposes
 def save_model(model, detailed_model_name):
     model_directory = "dataset/saved_model/"
-    if not os.path.exists(model_directory):
-        os.makedirs(model_directory)
+    check_folder(model_directory)
 
     # serialize model to JSON
     model_json = model.to_json()
@@ -185,13 +214,14 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # View the structure of the model
     # model_.summary()
 
-    print("Begin training of: "
-          + timestr
-          + "-" + model_name
-          + "-dataset_" + prep.dataset
-          + "-num_epochs_" + str(epochs)
-          + "-batch_size_" + str(batch_size)
-          + "-image_size_" + str(image_size))
+    log_dict = {'Time': timestr,
+                'Model name': model_name,
+                'Used dataset': prep.dataset,
+                'Number of epochs': epochs,
+                'Image size': image_size,
+                'Batch size': batch_size}
+
+    print('Begin training of: ', log_dict)
 
     # Train the model
     history, model = train_model(model_, train_generator, valid_generator)
@@ -200,41 +230,35 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     print("\nRuntime", pred_time, "s")
 
     if use_reduced_dataset:
-        detailed_model_name = timestr \
-                              + "-" + model_name \
-                              + "-dataset_" + prep.dataset \
-                              + "-num_epochs_" + str(epochs) \
-                              + "-batch_size_" + str(batch_size) \
-                              + "-image_size_" + str(image_size) \
-                              + "-acc_" + str(round(history.history['accuracy'][-1], 4)).replace('.', '_') \
-                              + "-loss_" + str(round(history.history['loss'][-1], 4)).replace('.', '_')
+        after_run_info = {'Run time': pred_time,
+                          'Accuracy': round(history.history['accuracy'][-1], 4),
+                          'Loss': round(history.history['loss'][-1], 4)}
     else:
-        detailed_model_name = timestr \
-                              + "-" + model_name \
-                              + "-dataset_" + prep.dataset \
-                              + "-num_epochs_" + str(epochs) \
-                              + "-batch_size_" + str(batch_size) \
-                              + "-image_size_" + str(image_size) \
-                              + "-acc_" + str(round(history.history['accuracy'][-1], 4)).replace('.', '_') \
-                              + "-loss_" + str(round(history.history['loss'][-1], 4)).replace('.', '_') \
-                              + "-val_acc_" + str(round(history.history['val_accuracy'][-1], 4)).replace('.', '_') \
-                              + "-val_loss_" + str(round(history.history['val_loss'][-1], 4)).replace('.', '_')
+        after_run_info = {'Run time': pred_time,
+                          'Accuracy': round(history.history['accuracy'][-1], 4),
+                          'Loss': round(history.history['loss'][-1], 4),
+                          'Validation accuracy': round(history.history['val_accuracy'][-1], 4),
+                          'Validation loss': round(history.history['val_loss'][-1], 4)
+                          }
+
+    log_dict.update(after_run_info)
+
+    model_name = create_model_name(log_dict)
 
     if save_trained_model:
-        save_model(model, detailed_model_name)
+        save_model_log(log_dict, model_name)
+        save_model(model, model_name)
         # plots.plot_model_structure(model, detailed_model_name)
 
     # View the structure of the model
     #  model_.summary()
 
     plot_directory = "dataset/plots/"
-    if not os.path.exists(plot_directory):
-        os.makedirs(plot_directory)
+    check_folder(plot_directory)
 
     # only plot statistics if whole dataset is used, otherwise history is missing val_acc & val_loss
     if not use_reduced_dataset:
         # Plot the model accuracy graph
-        plots.plot_training_history(history, plot_directory + detailed_model_name)
+        plots.plot_training_history(history, plot_directory + model_name)
         # Plot the model accuracy and loss metrics
         # plots.plot_metrics(history, plot_directory + detailed_model_name)
-
