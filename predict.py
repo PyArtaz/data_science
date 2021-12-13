@@ -38,7 +38,8 @@ def main():
     # plot Confusion Matrix and Classification Report
     plots.plot_confusion_matrix(test_generator.classes, predictions, class_labels)        # true_classes, predicted_classes, labels_of_classes
 
-    plots.plot_roc_multi_label(test_generator.classes, predictions, class_labels)
+    # plot multiclass ROC curve with
+    plots.plot_roc(test_generator.classes, predictions, class_labels)
 
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig

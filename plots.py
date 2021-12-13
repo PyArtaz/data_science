@@ -56,23 +56,6 @@ def plot_training_history(history, filename):
     plt.show()
 
 
-def plot_roc(true_classes, predictions, labels, **kwargs):
-    fp, tp, _ = roc_curve(true_classes, predictions)
-
-    plt.plot(100*fp, 100*tp, label=labels, linewidth=2, **kwargs)
-    plt.xlabel('False positives [%]')
-    plt.ylabel('True positives [%]')
-    plt.xlim([-0.5,20])
-    plt.ylim([80,100.5])
-    plt.grid(True)
-    ax = plt.gca()
-    ax.set_aspect('equal')
-
-    plt.tight_layout()
-    plt.legend()
-    plt.show()
-
-
 def plot_confusion_matrix(classes, predictions, labels):
     # Confusion Matrix and Classification Report
     predicted_categories = tf.argmax(predictions, axis=1)
@@ -87,7 +70,11 @@ def plot_confusion_matrix(classes, predictions, labels):
     print('Classification Report')
     print(classification_report(classes, predicted_categories, target_names=labels))
 
-def plot_roc_multi_label(y_true, y_pred, class_labels):
+
+def plot_roc(y_true, y_pred, class_labels):
+    """
+    Source: https://sites.google.com/site/nttrungmtwiki/home/it/data-science---python/multiclass-and-multilabel-roc-curve-plotting
+    """
     # transforms stings in class_labels in integers for further processing
     integer_map = map(int, class_labels)    # Maps each string to an int
     integer_class_labels = list(integer_map)    # Converts mapped output to a list of ints
