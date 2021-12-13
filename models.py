@@ -5,7 +5,6 @@
 # 3 | ERROR | Filter out all messages
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from glob import glob
 import keras
 import keras.layers
 from keras.models import Model, Sequential
@@ -18,8 +17,12 @@ from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, Add, Input, ZeroPadding2D, AveragePooling2D,GlobalAveragePooling2D
 import keras.optimizers
 import tensorflow as tf
-
 import preprocessing as prep
+
+################################################################################################################################################################
+# General Parameters and functions
+################################################################################################################################################################
+
 train_path = prep.train_path
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
@@ -29,18 +32,17 @@ activation = 'softmax'
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
 # optimizer = tf.optimizers.SGD(learning_rate=0.001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
 
-def get_num_of_classes():
-    return len(glob(train_path + '/*'))
 
+################################################################################################################################################################
+# Pretrained Models using Transfer Learning
+################################################################################################################################################################
 
 # Build the model by transfer learning. This is done by using a pretrained network for feature extraction (DenseNet121)
 # and adding a preprocessing layer to adapt to our image dimensions and output layer for our custom number of classes
 def create_pretrained_model_densenet121():
-    '''
+    """
     source: https://github.com/tshr-d-dragon/Sign_Language_Gesture_Detection/blob/main/DenseNet121_MobileNetv2_10epochs.ipynb
-    '''
-    # ToDo: search in literature for suitable model architectures
-
+    """
     # add preprocessing layer to the front of VGG
     densenet = DenseNet121(input_shape=IMAGE_SIZE + [3], weights='imagenet', include_top=False)
 
@@ -51,7 +53,7 @@ def create_pretrained_model_densenet121():
     #for i, layer in enumerate(densenet.layers):
     #    print(i, layer.name, layer.trainable)
 
-    num_of_classes = get_num_of_classes()
+    num_of_classes = prep.get_num_of_classes()
 
     # output layers - you can add more if you want
     x = Flatten()(densenet.output)
@@ -66,12 +68,13 @@ def create_pretrained_model_densenet121():
 
     return model, 'pretrained_model_densenet121'
 
+
 # Loading pretrained vgg network for transfer learning
-'''
-Source: https://github.com/krishnasahu29/SignLanguageRecognition/blob/main/vgg16.ipynb
-'''
 def create_pretrained_model_vgg():
-    num_of_classes = get_num_of_classes()
+    """
+    Source: https://github.com/krishnasahu29/SignLanguageRecognition/blob/main/vgg16.ipynb
+    """
+    num_of_classes = prep.get_num_of_classes()
 
     model = VGG16(weights='imagenet', include_top=False, input_shape=[image_size, image_size, 3])
 
@@ -99,12 +102,11 @@ def create_pretrained_model_vgg():
 
 
 # Loading pretrained inception v3 network for transfer learning
-'''
-Source: https://github.com/VedantMistry13/American-Sign-Language-Recognition-using-Deep-Neural-Network/blob/master/American_Sign_Language_Recognition.ipynb
-'''
 def create_pretrained_model_inception_v3():
-    WEIGHTS_FILE = './inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5'
-    num_of_classes = get_num_of_classes()
+    """
+    Source: https://github.com/VedantMistry13/American-Sign-Language-Recognition-using-Deep-Neural-Network/blob/master/American_Sign_Language_Recognition.ipynb
+    """
+    num_of_classes = prep.get_num_of_classes()
 
     inception_v3_model = InceptionV3(input_shape=(image_size, image_size, 3), include_top=False, weights='imagenet')
 
@@ -126,15 +128,12 @@ def create_pretrained_model_inception_v3():
     # print('Inception model output shape:', inception_output_layer.output_shape)
 
     # Not required --> inception_output = inception_output_layer.output
-    inception_output = inception_v3_model.output
+    inception_output = inception_v3_model.output        # Inception model output shape: (None, 10, 10, 768)
 
-    # Inception model output shape: (None, 10, 10, 768)
     # Adding our own set of fully connected layers at the end of Inception v3 network:
-    from tensorflow.keras.optimizers import RMSprop, Adam, SGD
-
     x = layers.GlobalAveragePooling2D()(inception_output)
     x = layers.Dense(256, activation='relu')(x)
-    # Not required --> x = layers.Dropout(0.2)(x)
+    # x = layers.Dropout(0.2)(x)                                             # Todo: Evaluate accuracy with and without dropout Layer
     x = layers.Dense(num_of_classes, activation=activation)(x)
 
     model = Model(inception_v3_model.input, x)
@@ -143,9 +142,13 @@ def create_pretrained_model_inception_v3():
     return model, 'pretrained_model_inception_v3'
 
 
+################################################################################################################################################################
+# Custom models using self defined structure
+################################################################################################################################################################
+
 # 2d cnn model for classifying image data
 def create_custom_model_2d_cnn():
-    num_of_classes = get_num_of_classes()
+    num_of_classes = prep.get_num_of_classes()
     model = Sequential()
 
     # We are using 4 convolution layers for feature extraction
@@ -208,7 +211,7 @@ def create_custom_model_2d_cnn():
 
 # 2d cnn model for classifying image data
 def create_custom_model_2d_cnn_v2():
-    num_of_classes = get_num_of_classes()
+    num_of_classes = prep.get_num_of_classes()
     model = Sequential()
     model.add(Conv2D(128, (2,2), input_shape=[image_size, image_size, 3], activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
@@ -224,11 +227,12 @@ def create_custom_model_2d_cnn_v2():
     model.compile(loss=crossentropy, optimizer=sgd, metrics=['accuracy'])
     return model, 'custom_model_2d_cnn_v2'
 
-'''
-Source: https://stackoverflow.com/questions/60295760/detecting-and-tracking-the-human-hand-with-opencv
-'''
+# 2d cnn model for classifying image data
 def create_custom_model_2d_cnn_v3():
-    num_of_classes = get_num_of_classes()
+    """
+    Source: https://stackoverflow.com/questions/60295760/detecting-and-tracking-the-human-hand-with-opencv
+    """
+    num_of_classes = prep.get_num_of_classes()
 
     i = Input(shape=[image_size, image_size, 3])
     x = Conv2D(32, (3, 3), activation='relu', padding='same')(i)

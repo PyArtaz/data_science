@@ -7,8 +7,10 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import matplotlib.pyplot as plt
 from keras.utils.vis_utils import plot_model
-from sklearn.metrics import roc_curve
-
+from sklearn.metrics import roc_curve, auc, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.preprocessing import label_binarize
+import tensorflow as tf
+from itertools import cycle
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -54,33 +56,10 @@ def plot_training_history(history, filename):
     plt.show()
 
 
-def plot_metrics(history, filename):
-    metrics = ['accuracy', 'loss']  #, 'precision', 'recall']
+def plot_roc(true_classes, predictions, labels, **kwargs):
+    fp, tp, _ = roc_curve(true_classes, predictions)
 
-    for n, metric in enumerate(metrics):
-        name = metric.replace("_"," ").capitalize()
-        fig = plt.subplot(1,2,n+1)
-        plt.plot(history.epoch, history.history[metric], color=colors[0], label='Train')
-        plt.plot(history.epoch, history.history['val_'+metric], color=colors[0], linestyle="--", label='Val')
-        plt.xlabel('Epoch')
-        plt.ylabel(name)
-        if metric == 'loss':
-            plt.ylim([0, plt.ylim()[1]])
-        elif metric == 'auc':
-            plt.ylim([0.8,1])
-        else:
-            plt.ylim([0,1])
-
-        plt.legend()
-    plt.tight_layout()
-    plt.savefig(filename)
-    plt.show()
-
-
-def plot_roc(name, labels, predictions, **kwargs):
-    fp, tp, _ = roc_curve(labels, predictions)
-
-    plt.plot(100*fp, 100*tp, label=name, linewidth=2, **kwargs)
+    plt.plot(100*fp, 100*tp, label=labels, linewidth=2, **kwargs)
     plt.xlabel('False positives [%]')
     plt.ylabel('True positives [%]')
     plt.xlim([-0.5,20])
@@ -91,4 +70,52 @@ def plot_roc(name, labels, predictions, **kwargs):
 
     plt.tight_layout()
     plt.legend()
+    plt.show()
+
+
+def plot_confusion_matrix(classes, predictions, labels):
+    # Confusion Matrix and Classification Report
+    predicted_categories = tf.argmax(predictions, axis=1)
+    cm = confusion_matrix(classes, predicted_categories)
+
+    print('Confusion Matrix')
+    print(cm)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    disp.plot(cmap=plt.cm.Blues)
+    plt.show()
+
+    print('Classification Report')
+    print(classification_report(classes, predicted_categories, target_names=labels))
+
+def plot_roc_multi_label(y_true, y_pred, class_labels):
+    # transforms stings in class_labels in integers for further processing
+    integer_map = map(int, class_labels)    # Maps each string to an int
+    integer_class_labels = list(integer_map)    # Converts mapped output to a list of ints
+
+    # Binarize the output
+    y_true = label_binarize(y_true, classes=integer_class_labels)
+    n_classes = y_true.shape[1]
+
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    # compute fpr and tpr with roc_curve from the ytest true labels to the scores
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_true[:, i], y_pred[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # plot each class  curve on single graph for multi-class one vs all classification
+    colors = cycle(['blue', 'red', 'green', 'brown', 'purple', 'pink', 'orange', 'black', 'yellow', 'cyan'])
+    for i, color, lbl in zip(range(n_classes), colors, class_labels):
+        plt.plot(fpr[i], tpr[i], color = color, lw = 1.5,
+        label = 'ROC Curve of class {0} (area = {1:0.3f})'.format(lbl, roc_auc[i]))
+    plt.plot([0, 1], [0, 1], 'k--', lw = 1.5)
+    plt.xlim([-0.05, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curve for CIFAR-10 Multi-Class Data')
+    plt.legend(loc = 'lower right', prop = {'size': 6})
+    #fullpath = save_plot_path.joinpath(save_plot_path.stem +'_roc_curve.png')
+    #plt.savefig(fullpath)
     plt.show()

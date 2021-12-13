@@ -14,24 +14,15 @@ import preprocessing as prep
 import time
 
 
-debug = False
+debug = False                              # just for debugging: skip loading of model for faster gui initialization.
 
 image_size = prep.image_size
-IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
+IMAGE_SIZE = prep.IMAGE_SIZE
 bottom_left, bottom_right = 150, 150
 
 model_directory = 'dataset/saved_model/'
 model_name = 'pretrained_model_vgg-num_epochs_3-batch_size_32-image_size_64-acc_0_9065-val_acc_0_8569'
 alphabet = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-# alphabet = ['A', 'B', 'C', 'del', 'I', 'J', 'S', 'space', 'T', 'Z']
-
-if not debug:
-    # load and create latest created model
-    model = prep.load_latest_model()
-    # model = prep.load_model_from_name(model_directory + model_name)
-
-    # tell the model what cost and optimization method to use
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -74,6 +65,7 @@ class Window(QMainWindow, Ui_MainWindow):
             index += 1
             i -= 1
         return arr
+
 
 class working1(QThread):
     ImageUpdate = pyqtSignal(QImage)
@@ -143,6 +135,14 @@ class working1(QThread):
 
 
 if __name__ == "__main__":
+    if not debug:
+        # load and create latest created model
+        model = prep.load_latest_model()
+        # model = prep.load_model_from_name(model_directory + model_name)
+
+        # tell the model what cost and optimization method to use
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
     app = QApplication(sys.argv)
     win = Window()
     win.show()
