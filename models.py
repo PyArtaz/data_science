@@ -23,7 +23,6 @@ import preprocessing as prep
 # General Parameters and functions
 ################################################################################################################################################################
 
-train_path = prep.train_path
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
 

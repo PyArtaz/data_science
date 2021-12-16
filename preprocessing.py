@@ -6,13 +6,13 @@ from keras.preprocessing.image import ImageDataGenerator
 ###############################
 # Dataset parameters
 ###############################
-train_path = 'dataset/digits'                        # Enter the directory containing the training images
+dataset_path = 'dataset/asl_alphabet_split'                        # Enter the directory containing the training images
 model_directory = 'dataset/saved_model/'             # directory to save the model
 
 ##############################
 # Training parameters
 ##############################
-image_size = 75
+image_size = 100
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 
 
@@ -26,7 +26,7 @@ def create_folder(folder_path):
 
 
 def get_num_of_classes():
-    return len(glob.glob(train_path + '/*'))
+    return len(glob.glob(dataset_path + '/train/*'))
 
 
 ################################################################################################################################################################

@@ -26,9 +26,9 @@ import preprocessing as prep
 # Training parameters
 ################################################################################################################################################################
 chkp_filepath = 'dataset/saved_model/checkpoints'  # Enter the filename you want your model to be saved as
-train_path = prep.train_path  # Enter the directory of the training images
+dataset_path = prep.dataset_path  # Enter the directory of the training images
 
-epochs = 2
+epochs = 3
 batch_size = 32
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE    # re-size all the images to this
@@ -43,26 +43,6 @@ num_train_images = 1000
 # Training FUNCTIONS
 ################################################################################################################################################################
 
-# reduces the original training dataset and only loads as much "num_train_images" as given. This function is only for faster training purposes
-def subset_training_images(num_train_images):
-    """
-    Source: https://stackoverflow.com/questions/58116359/is-there-a-simple-way-to-use-only-half-of-the-images-in-underlying-directories-u
-    """
-    images = []
-    labels = []
-    for sub_dir in os.listdir(train_path):
-        image_list = os.listdir(os.path.join(train_path, sub_dir))  # list of all image names in the directory
-        image_list = list(map(lambda x: os.path.join(sub_dir, x), image_list))
-        images.extend(image_list)
-        labels.extend([sub_dir] * len(image_list))
-
-    df = pd.DataFrame({"Images": images, "Labels": labels})
-    df = df.sample(frac=1).reset_index(drop=True)  # To shuffle the data # ToDo: subset df with equal class occurences
-    df = df.head(num_train_images)  # to take the subset of data (I'm taking 100 from it)
-    print(df)
-
-    return df
-
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
 def load_training_images():
@@ -74,53 +54,24 @@ def load_training_images():
                                    shear_range=0.2,
                                    zoom_range=0.2,
                                    brightness_range=[0.8, 1.2],
-                                   fill_mode='nearest',
-                                   validation_split=0.2)  # ,  horizontal_flip=True , label_mode='categorical')
+                                   fill_mode='nearest')  # ,  horizontal_flip=True , label_mode='categorical')
 
-    val_gen = ImageDataGenerator(rescale=1. / 255.,
-                                 validation_split=0.2)
+    val_gen = ImageDataGenerator(rescale=1. / 255.)
 
-    if use_reduced_dataset:
-        df = subset_training_images(num_train_images=num_train_images)
-        train_generator = train_gen.flow_from_dataframe(directory=train_path,
-                                                        dataframe=df,
-                                                        x_col="Images",
-                                                        y_col="Labels",
-                                                        class_mode="categorical",
-                                                        batch_size=batch_size,
-                                                        target_size=IMAGE_SIZE,
-                                                        color_mode=color_mode,
-                                                        shuffle=True,
-                                                        subset='training')
+    train_generator = train_gen.flow_from_directory(dataset_path + '/train',
+                                                    target_size=IMAGE_SIZE,
+                                                    color_mode=color_mode,
+                                                    shuffle=True,
+                                                    batch_size=batch_size,
+                                                    class_mode='categorical')
+    # save_to_dir=(train_path+'_augmented'))
 
-        # ToDo: find error why val_acc & val_loss are not computed when using flow_from_dataframe
-        valid_generator = val_gen.flow_from_dataframe(directory=train_path,
-                                                      dataframe=df,
-                                                      x_col="Images",
-                                                      y_col="Labels",
-                                                      class_mode="categorical",
-                                                      batch_size=batch_size,
-                                                      target_size=IMAGE_SIZE,
-                                                      color_mode=color_mode,
-                                                      shuffle=True,
-                                                      subset='validation')
-    else:
-        train_generator = train_gen.flow_from_directory(train_path,
-                                                        target_size=IMAGE_SIZE,
-                                                        color_mode=color_mode,
-                                                        shuffle=True,
-                                                        batch_size=batch_size,
-                                                        subset='training',
-                                                        class_mode='categorical')
-        # save_to_dir=(train_path+'_augmented'))
-
-        valid_generator = val_gen.flow_from_directory(train_path,
-                                                      target_size=IMAGE_SIZE,
-                                                      color_mode=color_mode,
-                                                      shuffle=True,
-                                                      batch_size=batch_size,
-                                                      subset='validation',
-                                                      class_mode='categorical')
+    valid_generator = val_gen.flow_from_directory(dataset_path + '/val',
+                                                  target_size=IMAGE_SIZE,
+                                                  color_mode=color_mode,
+                                                  shuffle=True,
+                                                  batch_size=batch_size,
+                                                  class_mode='categorical')
 
     return train_generator, valid_generator
 
@@ -176,7 +127,7 @@ def plot_statistics(model_name, history):
 
 
 def create_logdict():
-    dataset_name = train_path.split('/')[-1]        # dataset name used for detailed model name
+    dataset_name = dataset_path.split('/')[-1]        # dataset name used for detailed model name
 
     # initialize logging of training parameters
     log_dict = {'Time': timestr,

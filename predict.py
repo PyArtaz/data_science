@@ -9,13 +9,13 @@ import preprocessing as prep
 import plots
 
 
-test_directory = 'dataset/digits_test'                                      # define directory of unseen test data
-# labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-#           'A', 'B', 'C', 'D', 'del', 'E', 'F', 'G', 'H', 'I',
-#           'J', 'K', 'L', 'M', 'N', 'nothing', 'O', 'P', 'Q', 'R',
-#           'S', 'space', 'T', 'U', 'unknown', 'V', 'W', 'X', 'Y', 'Z']  # missing: 'AE', 'OE', 'UE', 'SCH'
+test_directory = 'dataset/asl_alphabet_split/test'                                      # define directory of unseen test data
 
-class_labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']  # missing: 'AE', 'OE', 'UE', 'SCH'
+class_labels = ['A', 'B', 'C', 'D', 'del', 'E', 'F', 'G', 'H', 'I',
+                'J', 'K', 'L', 'M', 'N', 'nothing', 'O', 'P', 'Q', 'R',
+                'S', 'space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+
 
 
 def main():
@@ -23,7 +23,8 @@ def main():
     test_generator = prep.load_test_images(test_directory)
 
     # load and create latest created model
-    model = prep.load_latest_model()
+    # model = prep.load_latest_model()
+    model = prep.load_model_from_name("dataset/saved_model/20211210-161623-pretrained_model_vgg-dataset_asl_alphabet_train")    #
 
     # tell the model what cost and optimization method to use
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
