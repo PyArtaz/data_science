@@ -176,10 +176,12 @@ def plot_statistics(model_name, history):
 
 
 def create_logdict():
+    dataset_name = train_path.split('/')[-1]        # dataset name used for detailed model name
+
     # initialize logging of training parameters
     log_dict = {'Time': timestr,
                 'Model name': model_name,
-                'Used dataset': prep.dataset_name,
+                'Used dataset': dataset_name,
                 'Number of epochs': epochs,
                 'Image size': image_size,
                 'Batch size': batch_size}

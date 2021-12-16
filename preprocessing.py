@@ -7,7 +7,6 @@ from keras.preprocessing.image import ImageDataGenerator
 # Dataset parameters
 ###############################
 train_path = 'dataset/digits'                        # Enter the directory containing the training images
-dataset_name = train_path.split('/')[-1]             # dataset name used for detailed model name
 model_directory = 'dataset/saved_model/'             # directory to save the model
 
 ##############################
@@ -15,11 +14,6 @@ model_directory = 'dataset/saved_model/'             # directory to save the mod
 ##############################
 image_size = 75
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
-save_trained_model = True
-color_mode = 'rgb'  # Notiz: mit color_mode='grayscale' passen die 1 dimensionalen Bilder ggf. nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
-
-use_reduced_dataset = False     # set true to use a reduced dataset with a total amount of num_train_images
-num_train_images = 100
 
 
 ################################################################################################################################################################
