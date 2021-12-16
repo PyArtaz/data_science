@@ -16,15 +16,13 @@ class_labels = ['A', 'B', 'C', 'D', 'del', 'E', 'F', 'G', 'H', 'I',
                 'S', 'space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 
-
-
-def main():
+if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # load test images
     test_generator = prep.load_test_images(test_directory)
 
     # load and create latest created model
-    # model = prep.load_latest_model()
-    model = prep.load_model_from_name("dataset/saved_model/20211210-161623-pretrained_model_vgg-dataset_asl_alphabet_train")    #
+    #model = prep.load_latest_model()
+    model = prep.load_model_from_name("dataset/saved_model/20211210-161623-pretrained_model_vgg-dataset_asl_alphabet_train")  #
 
     # tell the model what cost and optimization method to use
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -37,14 +35,7 @@ def main():
     predictions = model.predict(test_generator, steps=steps_per_epoch, verbose=1)
 
     # plot Confusion Matrix and Classification Report
-    plots.plot_confusion_matrix(test_generator.classes, predictions, class_labels)        # true_classes, predicted_classes, labels_of_classes
+    plots.plot_confusion_matrix(test_generator.classes, predictions, class_labels)  # true_classes, predicted_classes, labels_of_classes
 
     # plot multiclass ROC curve with
     plots.plot_roc(test_generator.classes, predictions, class_labels)
-
-
-if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
-    main()
-
-
-

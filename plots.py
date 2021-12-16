@@ -75,12 +75,11 @@ def plot_roc(y_true, y_pred, class_labels):
     """
     Source: https://sites.google.com/site/nttrungmtwiki/home/it/data-science---python/multiclass-and-multilabel-roc-curve-plotting
     """
-    # transforms stings in class_labels in integers for further processing
-    integer_map = map(int, class_labels)    # Maps each string to an int
-    integer_class_labels = list(integer_map)    # Converts mapped output to a list of ints
+    # transforms strings in class_labels in integers for further processing
+    integer_class_labels = list(range(len(class_labels)))
 
     # Binarize the output
-    y_true = label_binarize(y_true, classes=integer_class_labels)
+    y_true = label_binarize(y_true, classes=integer_class_labels)       # label_binarize(y_true, classes=list(map(int, [1,2,3,6,4,5,6,3,2,3,2,3])))
     n_classes = y_true.shape[1]
 
     fpr = dict()

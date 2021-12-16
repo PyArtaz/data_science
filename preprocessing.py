@@ -6,7 +6,7 @@ from keras.preprocessing.image import ImageDataGenerator
 ###############################
 # Dataset parameters
 ###############################
-dataset_path = 'dataset/asl_alphabet_split'                        # Enter the directory containing the training images
+dataset_path = 'dataset/asl_alphabet'          # Enter the directory containing the training images
 model_directory = 'dataset/saved_model/'             # directory to save the model
 
 ##############################
@@ -69,7 +69,6 @@ def load_test_images(valid_path):
                                                   shuffle=False,
                                                   batch_size=1,
                                                   class_mode=None)  # , class_mode='categorical') # wird im moment noch nicht benutzt
-                                                  # color_mode='grayscale'
 
     # if you forget to reset the test_generator you will get outputs in a weird order
     test_generator.reset()
