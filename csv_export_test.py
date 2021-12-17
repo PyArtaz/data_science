@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import pandas as pd
 from util import check_folder, get_filename, landmark_to_array
 from os import path
 
@@ -25,6 +26,6 @@ with mp_hands.Hands(
         class_folder = path.normpath(file).split(path.sep)[-2]
         save_path = '../data_science/dataset/hand_landmarks/Image/' + class_folder + '/'
         check_folder(save_path)
-        np.savetxt(save_path + get_filename(file) + '.csv', landmarks)
+        #np.savetxt(save_path + get_filename(file) + '.csv', landmarks)
 
         print(landmarks)
