@@ -1,5 +1,10 @@
 from os import walk, path, makedirs
+
 import numpy as np
+import pandas as pd
+
+import mediapipe as mp
+import cv2
 
 
 # Return all the folders in a root directory as a list of strings including the relative path
@@ -46,3 +51,45 @@ def save_1d(landmarks_3d, save_path):
     for dim_i, dim in enumerate(dimensions):
         name = path.normpath(save_path).split(path.sep)[-1] + '_landmarks_' + dim + '.csv'
         np.savetxt(save_path + name, landmarks_3d[:, :, dim_i])
+
+
+# Generates a list: [x0, y0, z0, ... , xi, yi, zi] where i is the features variable passed to the function
+def gen_xyz_col_names(features=21):
+    dir_names = ['x', 'y', 'z']
+    col_names = []
+    for feature in range(features):
+        col_names += [dir_name + str(feature) for dir_name in dir_names]
+
+    return col_names
+
+
+# Create a pandas DataFrame from a 3d numpy array
+def df_from_array(array, index, cols, classes):
+    df = pd.DataFrame(data=np.reshape(array, (array.shape[0], -1)), index=index, columns=cols)
+    df['Class'] = classes
+
+    return df
+
+
+# Return annotated image (to check sanity)
+def plot_random(image, result):
+    mp_drawing = mp.solutions.drawing_utils
+    mp_drawing_styles = mp.solutions.drawing_styles
+    mp_hands = mp.solutions.hands
+
+    for hand_landmarks in result.multi_hand_landmarks:
+        mp_drawing.draw_landmarks(
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
+
+    return image
+
+
+# Save image file
+def save_image(image, name):
+    save_path = '../data_science/dataset/hand_landmarks/evaluation/'
+    check_folder(save_path)
+    cv2.imwrite(save_path + get_filename(name) + '.png', cv2.flip(image, 1))
