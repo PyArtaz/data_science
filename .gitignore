@@ -1,5 +1,3 @@
 /dataset/
 /.idea/
-/resnet.py
-/predict_webcam_img.py
-/predict_webcam_img_2.py
+/venv/
