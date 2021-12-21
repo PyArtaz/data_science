@@ -3,7 +3,7 @@ import math
 import os
 
 
-#Decodes a given csv file and returns three lists with the x, y and z koordinates
+# Decode a given csv file and return three lists with the x, y and z coordinates
 def decode_csv(test_file):
     x = []
     y = []
@@ -23,60 +23,68 @@ def decode_csv(test_file):
     return x, y, z
 
 
-#Measures the distance between Node 0 and 1 from a file as a nominating
-#parameter for all other csv_files to make them comparable to our KI
+# Measure the distance between Node 0 and 1 from a file as a normalizing
+# parameter for all other csv_files to make them comparable to our KI
 def measure_distance(file):
     x, y, z = decode_csv(file)
     distance = math.sqrt((x[0] - x[1]) * 2 + (y[0] - y[1]) * 2 + (z[0] - z[1]) ** 2)
-    print(distance)
+    return distance
 
-#Measures a factor which makes our Koordinates komparable
-def measure_scalling_factor(scalling_file, test_file):
-    factor = measure_distance(scalling_file) / measure_distance(test_file)
+
+# Measure a factor which makes our coordinates comparable
+def measure_scaling_factor(scaling_file, test_file):
+    factor = measure_distance(scaling_file) / measure_distance(test_file)
     return factor
 
-#Makes a new koordinatesystem with the origin at Node 0 and returns the new
-#Koordintes x_new, y_new and z_new nominated by a factor
-def new_koordinate_system(scalling_file, test_file):
+
+# Create a shifted coordinate system with the origin at node 0 and return the new
+# coordinates x_new, y_new and z_new normalized by a factor
+def new_coordinate_system(scaling_file, test_file):
     x_new = []
     y_new = []
     z_new = []
     x, y, z = decode_csv(test_file)
-    factor = measure_scalling_factor(scalling_file, test_file)
-    for x_koordinate in x:
-        x_new.append((x[0] - x_koordinate)*factor)
+    factor = measure_scaling_factor(scaling_file, test_file)
+    for x_coordinate in x:
+        x_new.append((x[0] - x_coordinate) * factor)
 
-    for y_koordinate in y:
-        y_new.append((y[0] - y_koordinate)*factor)
+    for y_coordinate in y:
+        y_new.append((y[0] - y_coordinate) * factor)
 
-    for z_koordinate in z:
-        z_new.append((z[0] - z_koordinate)*factor)
+    for z_coordinate in z:
+        z_new.append((z[0] - z_coordinate) * factor)
     return x_new, y_new, z_new
 
 
-#Measures the new csv_files datas and saves them in a new csv_file for all pictures
-def write_existing_csv(scalling_file, test_file):
-    x_new, y_new, z_new = new_koordinate_system(scalling_file, test_file)
+# Measures the new csv_files datas and saves them in a new csv_file for all pictures
+def write_existing_csv(scaling_file, test_file):
+    x_new, y_new, z_new = new_coordinate_system(scaling_file, test_file)
     data = [x_new, y_new, z_new]
     with open(test_file, 'w') as Test_csv:
         writer = csv.writer(Test_csv)
         writer.writerows(data)
 
-#Checks if Path from a file exists
-def check_path_exists(i,j,m):
-    if not os.path.exists(r"/Users/maximilianruhl/PycharmProjects/xyz_plotter/CSV_files" + str(j) + "/" + str(i) + "" + str(j) + "" + str(
-            m) + "_cam1.mpg"):
+
+# Check if a file path exists
+def check_path_exists(i, j, m):
+    if not os.path.exists(
+            r"/Users/maximilianruhl/PycharmProjects/xyz_plotter/CSV_files" + str(j) + "/" + str(i) + "" + str(
+                    j) + "" + str(
+                    m) + "_cam1.mpg"):
         return False
     else:
         return True
 
-#Returns the path from the next file
-def get_path_name(i,j,m):
-    path = r"/Users/maximilianruhl/PycharmProjects/xyz_plotter/CSV_files" + str(j) + "/" + str(i) + "" + str(j) + "" + str(
-            m) + "_cam1.mpg"
+
+# Return the path of the next file
+def get_path_name(i, j, m):
+    path = r"/Users/maximilianruhl/PycharmProjects/xyz_plotter/CSV_files" + str(j) + "/" + str(i) + "" + str(
+        j) + "" + str(
+        m) + "_cam1.mpg"
     return path
 
-#Changes all CSV_files
+
+# Change all CSV_files
 def change_all_csv(scalling_file):
     i = 1
     j = 1

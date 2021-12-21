@@ -6,17 +6,21 @@ import pandas as pd
 from os import path
 from time import time
 
-dataset_path = '../data_science/dataset/Image/'
-save_path = '../data_science/dataset/hand_landmarks/Image/'
+dataset_path = '../data_science/dataset/asl_alphabet_train/'
+save_path = '../data_science/dataset/hand_landmarks/asl_alphabet_train/'
 class_folders = util.get_subfolders(dataset_path)
 no_hand_detected = []
 landmark_files = []
 classes = []
 
-rng = np.random.default_rng()
+dataset_name = path.normpath(save_path).split(path.sep)[-1]
 file_i = 0
+
+image_probability = 0.1
+save_image = False
 save_separate = False
 
+rng = np.random.default_rng()
 start_time = time()
 
 for f_i, folder in enumerate(class_folders):
@@ -40,14 +44,16 @@ for f_i, folder in enumerate(class_folders):
             image = cv2.flip(cv2.imread(file), 1)
             # Convert the BGR image to RGB before processing.
             results = hands.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+
+            # Check if a hand was detected, and if not, add file name to no_hand_detected and continue to next iteration
             if not results.multi_hand_landmarks:
                 no_hand_detected.append(class_folder + '/' + util.get_filename(file))
                 file_i += 1
                 continue
 
-            # Experimental
-            # if rng.random() < 0.1:
-                # util.save_image(util.plot_random(image, results), file)
+            # Randomly save annotated images with image_probability to check annotation plausibility
+            if save_image and rng.random() < image_probability:
+                util.save_image(util.plot_random(image, results), file, dataset_name)
 
             # Extract the landmark coordinates and store them in an array
             if save_separate:
@@ -64,16 +70,17 @@ for f_i, folder in enumerate(class_folders):
                 classes.append(class_folder)
 
 if not save_separate:
+    # Save landmark files, classes and landmarks separately, as well as files where no hands were detected (6 files)
+    np.savetxt(save_path + dataset_name + '_landmark_files.csv', landmark_files, fmt='%s')
+    np.savetxt(save_path + dataset_name + '_landmark_classes.csv', classes, fmt='%s')
+    np.savetxt(save_path + dataset_name + '_no_hand_detected.csv', no_hand_detected, fmt='%s')
     util.save_1d(landmarks, save_path)
-    dom_name = path.normpath(save_path).split(path.sep)[-1]
-    np.savetxt(save_path + dom_name + '_landmark_files.csv', landmark_files, fmt='%s')
-    np.savetxt(save_path + dom_name + '_landmark_classes.csv', classes, fmt='%s')
 
+    # Construct and save a DataFrame containing the flattened landmarks, the landmark files and classes as index and
+    # last column, respectively
     landmarks_df = util.df_from_array(landmarks, index=landmark_files, cols=util.gen_xyz_col_names(), classes=classes)
-    landmarks_df.to_csv(save_path + dom_name + '_landmarks.csv')
+    landmarks_df.to_csv(save_path + dataset_name + '_landmarks.csv')
 
-print('No hand was detected in these files: ')
-print(no_hand_detected)
 print('No hands were detected in {} out of {} images.'.format(len(no_hand_detected),
                                                               len(no_hand_detected) + len(landmark_files)))
 print("\nRuntime", time() - start_time, "s")

@@ -71,12 +71,14 @@ def df_from_array(array, index, cols, classes):
     return df
 
 
-# Return annotated image (to check sanity)
+# Return annotated image (to check plausibility)
 def plot_random(image, result):
+    # Create necessary objects to use MediaPipe drawing utility
     mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles
     mp_hands = mp.solutions.hands
 
+    # Draw landmarks in image
     for hand_landmarks in result.multi_hand_landmarks:
         mp_drawing.draw_landmarks(
             image,
@@ -88,8 +90,8 @@ def plot_random(image, result):
     return image
 
 
-# Save image file
-def save_image(image, name):
-    save_path = '../data_science/dataset/hand_landmarks/evaluation/'
+# Save image file to evaluation/dataset/ in hand_landmarks folder
+def save_image(image, name, dataset):
+    save_path = '../data_science/dataset/hand_landmarks/evaluation/' + dataset + '/'
     check_folder(save_path)
     cv2.imwrite(save_path + get_filename(name) + '.png', cv2.flip(image, 1))
