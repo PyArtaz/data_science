@@ -8,6 +8,7 @@ from time import time
 
 dataset_path = '../data_science/dataset/asl_alphabet_train/'
 save_path = '../data_science/dataset/hand_landmarks/asl_alphabet_train/'
+annotated_img_path = '../data_science/dataset/hand_landmarks/evaluation/asl_alphabet_train'
 class_folders = util.get_subfolders(dataset_path)
 no_hand_detected = []
 landmark_files = []
@@ -53,7 +54,7 @@ for f_i, folder in enumerate(class_folders):
 
             # Randomly save annotated images with image_probability to check annotation plausibility
             if save_image and rng.random() < image_probability:
-                util.save_image(util.plot_random(image, results), file, dataset_name)
+                util.save_image(util.annotate_image(image, results), file, annotated_img_path)
 
             # Extract the landmark coordinates and store them in an array
             if save_separate:

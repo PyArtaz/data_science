@@ -71,8 +71,8 @@ def df_from_array(array, index, cols, classes):
     return df
 
 
-# Return annotated image (to check plausibility)
-def plot_random(image, result):
+# Return annotated image (to check plausibility) using the MediaPipe drawing utility
+def annotate_image(image, result):
     # Create necessary objects to use MediaPipe drawing utility
     mp_drawing = mp.solutions.drawing_utils
     mp_drawing_styles = mp.solutions.drawing_styles
@@ -90,8 +90,41 @@ def plot_random(image, result):
     return image
 
 
-# Save image file to evaluation/dataset/ in hand_landmarks folder
-def save_image(image, name, dataset):
-    save_path = '../data_science/dataset/hand_landmarks/evaluation/' + dataset + '/'
+# Save image file to save_path
+def save_image(image, name, save_path):
     check_folder(save_path)
-    cv2.imwrite(save_path + get_filename(name) + '.png', cv2.flip(image, 1))
+    cv2.imwrite(save_path + '/' + get_filename(name) + '.png', cv2.flip(image, 1))
+
+
+# Extract line of given file from DataFrame
+def get_file_line(file_path, df):
+    index = path.normpath(file_path).split(path.sep)[-2] + '/' + get_filename(file_path)
+
+    return df.loc[index]
+
+
+# Calculate image coordinates from landmarks array
+def img_coordinates(landmarks, img_height, img_width):
+    landmarks_x = landmarks[0::3]
+    landmarks_y = landmarks[1::3]
+
+    landmarks_x *= img_width
+    landmarks_y *= img_height
+
+    return landmarks_x, landmarks_y
+
+
+# Draw landmarks on image from DataFrame
+def draw_landmarks(img_path, df):
+    landmarks = get_file_line(img_path, df).drop('Class')
+    landmarks = landmarks.to_numpy()
+
+    img = cv2.flip(cv2.imread(img_path), 1)
+    img_height, img_width, _ = img.shape
+
+    img_x, img_y = img_coordinates(landmarks, img_height, img_width)
+
+    for i in range(img_x.shape[0]):
+        cv2.drawMarker(img, (int(img_x[i]), int(img_y[i])), (0, 0, 255), markerType=cv2.MARKER_STAR, markerSize=4)
+
+    return img
