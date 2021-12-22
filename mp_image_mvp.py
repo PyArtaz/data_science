@@ -1,6 +1,6 @@
 import cv2
 import mediapipe as mp
-from util import annotate_image, save_image
+from util_mvp import annotate_image, save_image
 
 # Insert (relative) file path(s) of the image(s) to be processed
 IMAGE_FILES = ['../data_science/dataset/Image/35/6_35_2_cam1.png']

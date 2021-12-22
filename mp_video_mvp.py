@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-from util import landmark_to_array, annotate_image
+from util_mvp import landmark_to_array, annotate_image
 
 # Defines with which probability the detected landmarks are printed to the console
 print_probability = 0.0025
