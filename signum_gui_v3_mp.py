@@ -15,6 +15,35 @@ from util import landmark_to_array, annotate_image
 import pickle
 
 
+#Pipeline for the camera
+def gstreamer_pipeline(
+    capture_width=1280,
+    capture_height=720,
+    display_width=1280,
+    display_height=720,
+    framerate=60,
+    flip_method=0,
+    ):
+        return (
+            "nvarguscamerasrc ! "
+            "video/x-raw(memory:NVMM), "
+            "width=(int)%d, height=(int)%d, "
+            "format=(string)NV12, framerate=(fraction)%d/1 ! "
+            "nvvidconv flip-method=%d ! "
+            "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+            "videoconvert ! "
+            "video/x-raw, format=(string)BGR ! appsink"
+            % (
+                capture_width,
+                capture_height,
+                framerate,
+                flip_method,
+                display_width,
+                display_height,
+            )
+        )
+
+
 class Window(QMainWindow, Ui_MainWindow):
 
     def __init__(self, parent=None):
@@ -22,39 +51,23 @@ class Window(QMainWindow, Ui_MainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        print("Found camera indizes: " + str(self.returnCameraIndexes()))
-        
-        #Start und Stop Button
+        # Start und Stop Button
         self.ui.StopPlay.clicked.connect(self.VideoStopSlot)
         self.ui.StartPlay.clicked.connect(self.VideoStartSlot)
-        
+
         # Video Thread
         self.worker1 = working1()
         self.worker1.start()
         self.worker1.ImageUpdate.connect(self.ImageUpdateSlot)
-        
+
     def VideoStopSlot(self):
         self.worker1.stop_thread()
-        
+
     def VideoStartSlot(self):
         self.worker1.start_thread()
-        
-    def ImageUpdateSlot(self, Image):
-         self.ui.LiveVideo.setPixmap(QPixmap.fromImage(Image))
 
-    def returnCameraIndexes(self):
-        # checks the first 10 indexes.
-        index = 0
-        arr = []
-        i = 10
-        while i > 0:
-            cap = cv2.VideoCapture(index)
-            if cap.read()[0]:
-                arr.append(index)
-                cap.release()
-            index += 1
-            i -= 1
-        return arr
+    def ImageUpdateSlot(self, Image):
+        self.ui.LiveVideo.setPixmap(QPixmap.fromImage(Image))
 
 
 class working1(QThread):
@@ -65,6 +78,8 @@ class working1(QThread):
     def run(self): 
         self.ThreadActive = True
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        #cap = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+
         if not cap.isOpened():
             return
 
@@ -86,7 +101,7 @@ class working1(QThread):
                     cv2.imshow('image_rgb', image)
 
                     # image = cv2.flip(image, 1)
-                    top, bottom, left, right = 75, 300, 75, 300  # bottom_left, bottom_right, bottom_left+image_size, bottom_right+image_size
+                    top, bottom, left, right = 75, 375, 75, 375  # bottom_left, bottom_right, bottom_left+image_size, bottom_right+image_size
                     roi = image[top:bottom, left:right]
                     #roi = cv2.flip(roi, 1)
                     cv2.imshow('roi',roi)
