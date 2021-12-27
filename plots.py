@@ -57,6 +57,8 @@ def plot_training_history(history, filename):
 
 
 def plot_confusion_matrix(classes, predictions, labels):
+    #labels = [str(class_label) for class_label in list(set(predictions))]
+
     # Confusion Matrix and Classification Report
     predicted_categories = tf.argmax(predictions, axis=1)
     cm = confusion_matrix(classes, predicted_categories)
