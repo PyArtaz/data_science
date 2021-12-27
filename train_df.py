@@ -19,6 +19,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, accuracy_score, confusion_matrix, classification_report
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
+import pickle
 
 # activate for GPU acceleration
 # gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
@@ -141,6 +142,15 @@ def perform_tpot_search():
 
     return tpot
 
+def save_trained_model(model):
+    # create model filename
+    filename = 'dataset/saved_model/' + timestr + '_model.pkl'
+
+    # now you can save it to a file
+    with open(filename, 'wb') as f:
+        pickle.dump(model, f)
+
+    print('Saved model to disk: ' + filename)
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -150,12 +160,14 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     X_train, X_test, y_train, y_test = load_dataframe()
 
     # either: search for suitable model by manual grid search or automated evolutionary search
-    # model = perform_grid_search(X_train, y_train)         # manual grid search
-    # model = perform_tpot_search(X_train, y_train)         # automated evolutionary algorithm search
+    # model = perform_grid_search(X_train.values, y_train)         # manual grid search
+    # model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
 
     # or: use previously found optimal model
     model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
-    model.fit(X_train, y_train)
+    model.fit(X_train.values, y_train)
+
+    save_trained_model(model)
 
     pred_time = time.time() - start_time
     print("\nRuntime", pred_time, "s")
