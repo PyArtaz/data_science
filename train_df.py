@@ -6,6 +6,7 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
+import joblib
 import numpy as np
 from sklearn.utils import class_weight
 import sklearn.model_selection
@@ -144,11 +145,14 @@ def perform_tpot_search():
 
 def save_trained_model(model):
     # create model filename
-    filename = 'dataset/saved_model/' + timestr + '_model.pkl'
+    filename = 'dataset/saved_model/' + timestr + '_model'
 
     # now you can save it to a file
-    with open(filename, 'wb') as f:
+    with open(filename + '.pkl', 'wb') as f:
         pickle.dump(model, f)
+
+    # alternative to pickle
+    joblib.dump(model, filename + '.sav')
 
     print('Saved model to disk: ' + filename)
 
