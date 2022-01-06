@@ -31,7 +31,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/digits/digits_landmarks.csv'
+dataset_path = 'dataset/hand_landmarks/digits/digits_landmarks_bb_without_unknowns.csv'
 
 
 ################################################################################################################################################################
@@ -47,11 +47,11 @@ def load_dataframe():
 
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
 
-    # plot_class_occurrences(y)
+    plot_class_occurrences(y)
 
     X_resampled, y_resampled = oversample_class_occurrences(X, y)
 
-    # plot_class_occurrences(y_resampled)
+    plot_class_occurrences(y_resampled)
 
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42, shuffle=True, stratify=y_resampled)
 
