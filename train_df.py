@@ -31,7 +31,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/digits/digits_landmarks_bb_without_unknowns.csv'
+dataset_path = 'dataset/hand_landmarks/digits/digits_landmarks_bb_squarePix_without_unknowns.csv'
 
 
 ################################################################################################################################################################
