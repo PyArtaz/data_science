@@ -66,17 +66,22 @@ def gen_xyz_col_names(features=21):
 def annotate_image(image, result):
     # Create necessary objects to use MediaPipe drawing utility
     mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
+#    mp_drawing_styles = mp.solutions.drawing_styles
     mp_hands = mp.solutions.hands
 
+    for num, hand in enumerate(result.multi_hand_landmarks):
+                mp_drawing.draw_landmarks(image,hand,mp_hands.HAND_CONNECTIONS,
+                mp_drawing.DrawingSpec(color=(255,0,0),thickness=2 , circle_radius=4),
+                mp_drawing.DrawingSpec(color=(0,255,255),thickness=2 , circle_radius=2))
+
     # Draw landmarks in image
-    for hand_landmarks in result.multi_hand_landmarks:
-        mp_drawing.draw_landmarks(
-            image,
-            hand_landmarks,
-            mp_hands.HAND_CONNECTIONS,
-            mp_drawing_styles.get_default_hand_landmarks_style(),
-            mp_drawing_styles.get_default_hand_connections_style())
+#    for hand_landmarks in result.multi_hand_landmarks:
+#        mp_drawing.draw_landmarks(
+#            image,
+#            hand_landmarks,
+#            mp_hands.HAND_CONNECTIONS,
+#            mp_drawing_styles.get_default_hand_landmarks_style(),
+#            mp_drawing_styles.get_default_hand_connections_style())
 
     return image
 

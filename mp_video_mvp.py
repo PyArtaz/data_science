@@ -12,14 +12,13 @@ rng = np.random.default_rng()
 mp_hands = mp.solutions.hands
 
 # For webcam input:
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 if save_video:
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     out = cv2.VideoWriter('output.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 24, (frame_width, frame_height))
 
 with mp_hands.Hands(
-        model_complexity=0,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5) as hands:
     while cap.isOpened():
