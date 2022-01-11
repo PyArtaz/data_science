@@ -4,6 +4,9 @@
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
 import os
+
+import sklearn
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import matplotlib.pyplot as plt
 from keras.utils.vis_utils import plot_model
@@ -71,6 +74,15 @@ def plot_confusion_matrix(classes, predictions, labels):
 
     print('Classification Report')
     print(classification_report(classes, predicted_categories, target_names=labels))
+
+
+def plot_cm(model, X_test, y_test):
+    # Generate confusion matrix
+    matrix = sklearn.metrics.ConfusionMatrixDisplay.from_estimator(model, X_test, y_test,
+                                   cmap=plt.cm.Blues,
+                                   normalize='true')
+    plt.title('Confusion matrix')
+    plt.show()
 
 
 def plot_roc(y_true, y_pred, class_labels):

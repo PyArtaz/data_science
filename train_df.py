@@ -46,6 +46,7 @@ def load_dataframe():
     print(df.head())
 
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
+    y = y.astype(str)
 
     # plot_class_occurrences(y)
 
@@ -118,6 +119,7 @@ def plot_statistics(y_test, predictions):
     # plots.plot_confusion_matrix(y_test, predictions, class_labels)
 
 
+
 def perform_grid_search(X_train, y_train):
     param_grid = {'C': [0.1, 1, 10], 'degree': [3, 5, 7], 'gamma': [1, 5, 10]}  # , 'kernel': ['rbf', 'poly', 'sigmoid']}
 
@@ -181,3 +183,4 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     predictions = model.predict(X_test)  # check performance
 
     plot_statistics(y_test, predictions)
+    plots.plot_cm(model, X_test, y_test)
