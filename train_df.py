@@ -31,7 +31,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/digits/digits_landmarks_bb_squarePix_left+right_without_unknowns.csv'
+dataset_path = 'dataset/hand_landmarks/asl_alphabet+digits_train_landmarks_bb.csv'
 
 
 ################################################################################################################################################################
@@ -47,11 +47,11 @@ def load_dataframe():
 
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
 
-    plot_class_occurrences(y)
+    # plot_class_occurrences(y)
 
     X_resampled, y_resampled = oversample_class_occurrences(X, y)
 
-    plot_class_occurrences(y_resampled)
+    # plot_class_occurrences(y_resampled)
 
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42, shuffle=True, stratify=y_resampled)
 
@@ -63,7 +63,9 @@ def plot_class_occurrences(class_list):
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    class_labels = [str(class_label) for class_label in list(set(class_list))]
+    # class_labels = [str(class_label) for class_label in list(set(class_list))]
+    string_ints = [str(int) for int in class_list.values]
+    class_labels = pd.Series(string_ints).drop_duplicates().tolist()
     g = sns.countplot(class_list)
     g.set_xticklabels(labels=class_labels)
     plt.show()
