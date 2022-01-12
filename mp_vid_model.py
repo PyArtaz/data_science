@@ -1,6 +1,7 @@
 import sys
 import os
 import glob
+import time
 
 import cv2
 import mediapipe as mp
@@ -10,18 +11,25 @@ from util_mvp import landmark_to_array, annotate_image
 import pickle
 
         
-#Defines with which probability the detected landmarks are printed to the console
-print_probability = 0.0025
-#Specify whether video should be saved or not
-save_video = False
 
 def loadVid():
         rng = np.random.default_rng()
         model = load_latest_model()
         mp_hands = mp.solutions.hands
 
+        #Defines with which probability the detected landmarks are printed to the console
+        print_probability = 0.0025
+        #Specify whether video should be saved or not
+        save_video = False
+        window_name = "SigNum"
+
         #For webcam input:
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(4)
+        
+        #FPS
+        fps = 0
+        fps_start = 0
+        
         if save_video:
             frame_width = int(cap.get(3))
             frame_height = int(cap.get(4))
@@ -36,7 +44,7 @@ def loadVid():
                     print("Ignoring empty camera frame.")
                     # If loading a video, use 'break' instead of 'continue'.
                     continue
-
+                
                 #To improve performance, optionally mark the image as not writeable to pass by reference.
                 top, bottom, left, right = 75, 275, 375, 575  # bottom_left, bottom_right, bottom_left+image_size, bottom_right+image_size
                 roi = image[top:bottom, left:right]
@@ -65,13 +73,25 @@ def loadVid():
                 cv2.rectangle(image, (right, top), (left, bottom), (0, 255, 0), 2)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 cv2.putText(image, prediction_string, (0, 430), font, 3, (0, 0, 255), 2)
+                
+                # FPS
+                fps_end = time.time()
+                time_diff = fps_end - fps_start 
+                fps = 1/time_diff
+                fps_start = fps_end
+                
+                fps_text = "FPS: {:.2f}".format(fps)
+                cv2.putText(image, fps_text, (5,30), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 255), 1)
+
                 if save_video:
                     out.write(image)
                 # Flip the image horizontally for a selfie-view display.
                 #cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
-                cv2.imshow('MediaPipe Hands',image)
+                cv2.imshow(window_name,image)
                 if cv2.waitKey(5) & 0xFF == ord('q'):
                     break
+
+        
         cap.release()
 
 
