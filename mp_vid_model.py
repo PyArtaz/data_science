@@ -45,16 +45,16 @@ def loadVid():
                     # If loading a video, use 'break' instead of 'continue'.
                     continue
                 
-                #To improve performance, optionally mark the image as not writeable to pass by reference.
+                # Not sure if you need the roi
                 top, bottom, left, right = 75, 275, 375, 575  # bottom_left, bottom_right, bottom_left+image_size, bottom_right+image_size
                 roi = image[top:bottom, left:right]
-                results = hands.process(roi)
+                results = hands.process(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
                 # Draw the hand annotations on the image.
                 image.flags.writeable = True
                 if results.multi_hand_landmarks:
                                 annotate_image(roi, results)
                                 # Extract landmarks from image (these could be passed to a classification algorithm)
-                                landmarks = np.reshape(landmark_to_array(results), (1, -1))
+                                landmarks = landmark_to_array(results).reshape(1, -1)
 
                                 # classify landmarks
                                 prediction = model.predict(landmarks)

@@ -54,13 +54,13 @@ class working1(QThread):
                     top, bottom, left, right = 75, 275, 375, 575  # bottom_left, bottom_right, bottom_left+image_size, bottom_right+image_size
                     roi = image[top:bottom, left:right]
                     
-                    results = hands.process(roi)
+                    hands.process(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
                     image.flags.writeable = True
                     
                     if results.multi_hand_landmarks:
                         annotate_image(roi, results)
                         # Extract landmarks from image (these could be passed to a classification algorithm)
-                        landmarks = np.reshape(landmark_to_array(results), (1, -1))
+                        landmarks = landmark_to_array(results).reshape(1, -1)
 
                     # show rectangle with prediction area and predicted label on screen
     
