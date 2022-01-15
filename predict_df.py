@@ -60,13 +60,15 @@ def plot_cm(model, X_test, y_test):
                                    cmap=plt.cm.Blues,
                                    normalize='true')
     plt.title('Confusion matrix')
+    plt.tight_layout() # .tight_layout(top=0.977, bottom=0.044, left=0.008, right=0.992, hspace=0.2, wspace=0.2)
     plt.show()
+    # ToDO: plt.tight_layout + savefig
 
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # define directory of unseen test data
-    test_directory = 'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
-    #test_directory = 'dataset/hand_landmarks/asl_alphabet+digits_train_landmarks_bb.csv'
+    test_directory = 'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
+    #test_directory = 'dataset/hand_landmarks/asl_alphabet+digits_landmarks_bb.csv'
 
     # load test images
     X_test, y_test = load_df(test_directory)

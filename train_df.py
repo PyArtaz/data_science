@@ -31,7 +31,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/asl_alphabet+digits_train_landmarks_bb.csv'
+dataset_path = 'dataset/hand_landmarks/American Sign Language Letters/ASLL_landmarks+Letters+Numbers+Sign-Language-Digits+digits_landmarks_without_unknowns_bb_squarePix.csv'
 
 
 ################################################################################################################################################################
@@ -48,7 +48,7 @@ def load_dataframe():
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
     y = y.astype(str)
 
-    # plot_class_occurrences(y)
+    plot_class_occurrences(y)
 
     X_resampled, y_resampled = oversample_class_occurrences(X, y)
 
