@@ -31,7 +31,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/American Sign Language Letters/ASLL_landmarks+Letters+Numbers+Sign-Language-Digits+digits_landmarks_without_unknowns_bb_squarePix.csv'
+dataset_path = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'
 
 
 ################################################################################################################################################################

@@ -67,7 +67,7 @@ def plot_cm(model, X_test, y_test):
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # define directory of unseen test data
-    test_directory = 'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
+    test_directory = 'dataset/hand_landmarks/Letters_Artur/Letters_Artur_landmarks_bb_squarePix_flip.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
     #test_directory = 'dataset/hand_landmarks/asl_alphabet+digits_landmarks_bb.csv'
 
     # load test images
