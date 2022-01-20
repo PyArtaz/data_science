@@ -48,7 +48,7 @@ def load_dataframe():
     X, y = df.iloc[:, :-1], df.iloc[:, -1]
     y = y.astype(str)
 
-    plot_class_occurrences(y)
+    # plot_class_occurrences(y)
 
     X_resampled, y_resampled = oversample_class_occurrences(X, y)
 
@@ -134,9 +134,9 @@ def perform_grid_search(X_train, y_train):
     return grid
 
 
-def perform_tpot_search():
+def perform_tpot_search(X_train, y_train):
     # define search
-    tpot = TPOTClassifier(generations=10, population_size=50, cv=10,
+    tpot = TPOTClassifier(generations=50, population_size=100, cv=10,
                                     random_state=42, verbosity=2, n_jobs=-1)
     # perform the search
     tpot.fit(X_train, y_train)
@@ -169,10 +169,10 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
 
     # either: search for suitable model by manual grid search or automated evolutionary search
     # model = perform_grid_search(X_train.values, y_train)         # manual grid search
-    # model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
+    model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
 
     # or: use previously found optimal model
-    model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
+    # model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
     model.fit(X_train.values, y_train)
 
     save_trained_model(model)

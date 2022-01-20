@@ -3,9 +3,11 @@
 # 1 | INFO | Filter out INFO messages
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
+import itertools
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 import sklearn.metrics
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -64,10 +66,29 @@ def plot_cm(model, X_test, y_test):
     plt.show()
     # ToDO: plt.tight_layout + savefig
 
+def plot_cm_2(cm, title='Confusion matrix', cmap=plt.cm.Oranges):
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(cm.shape[1])
+    plt.xticks(tick_marks, rotation=45)
+    ax = plt.gca()
+    ax.set_xticklabels((ax.get_xticks() +1).astype(str))
+    plt.yticks(tick_marks)
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], '.1f'),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # define directory of unseen test data
-    test_directory = 'dataset/hand_landmarks/Letters_Artur/Letters_Artur_landmarks_bb_squarePix_flip.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
+    test_directory = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
     #test_directory = 'dataset/hand_landmarks/asl_alphabet+digits_landmarks_bb.csv'
 
     # load test images
