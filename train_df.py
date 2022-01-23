@@ -4,6 +4,14 @@
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
 import os
+
+import keras.regularizers
+import scipy.spatial.distance
+import sklearn.decomposition
+import sklearn.neighbors
+import sklearn.preprocessing
+import tpot.builtins
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import joblib
@@ -169,10 +177,15 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
 
     # either: search for suitable model by manual grid search or automated evolutionary search
     # model = perform_grid_search(X_train.values, y_train)         # manual grid search
-    model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
+    # model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
 
     # or: use previously found optimal model
     # model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
+    #model = KNeighborsClassifier(Normalizer(FastICA(Normalizer(OneHotEncoder(input_matrix, minimum_fraction=0.25, sparse=False, threshold=10), norm=l2), tol=0.1), norm=l1),n_neighbors=1, p=1, weights=distance)
+    model = sklearn.neighbors.KNeighborsClassifier(
+        sklearn.preprocessing.Normalizer(
+            sklearn.decomposition.FastICA(
+                sklearn.preprocessing.Normalizer(tpot.builtins.OneHotEncoder(input_matrix, minimum_fraction=0.25, sparse=False, threshold=10), norm=keras.regularizers.l2), tol=0.1), norm=keras.l1), n_neighbors=1, p=1, weights=scipy.spatial.distance)
     model.fit(X_train.values, y_train)
 
     save_trained_model(model)

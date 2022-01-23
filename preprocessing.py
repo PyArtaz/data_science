@@ -6,7 +6,7 @@ from keras.preprocessing.image import ImageDataGenerator
 ###############################
 # Dataset parameters
 ###############################
-dataset_path = 'dataset/asl_alphabet'          # Enter the directory containing the training images
+dataset_path = 'dataset/Own_complete_split'          # Enter the directory containing the training images
 model_directory = 'dataset/saved_model/'             # directory to save the model
 
 ##############################
