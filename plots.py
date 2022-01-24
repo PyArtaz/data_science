@@ -59,7 +59,7 @@ def plot_training_history(history, filename):
     plt.show()
 
 
-def plot_confusion_matrix(classes, predictions, labels):
+def plot_confusion_matrix_cnn(classes, predictions, labels):
     #labels = [str(class_label) for class_label in list(set(predictions))]
 
     # Confusion Matrix and Classification Report
@@ -76,12 +76,21 @@ def plot_confusion_matrix(classes, predictions, labels):
     print(classification_report(classes, predicted_categories, target_names=labels))
 
 
+# Plot normalized & non-normalized confusion matrix
 def plot_cm(model, X_test, y_test):
-    # Generate confusion matrix
-    matrix = sklearn.metrics.ConfusionMatrixDisplay.from_estimator(model, X_test, y_test,
-                                   cmap=plt.cm.Blues,
-                                   normalize='true')
-    plt.title('Confusion matrix')
+    titles_options = [
+        ("Confusion matrix without normalization", None),
+        ("Normalized confusion matrix", "true"),
+    ]
+
+    # Generate confusion matrices
+    for title, normalize in titles_options:
+        disp = ConfusionMatrixDisplay.from_estimator(model, X_test, y_test, cmap=plt.cm.Blues, normalize=normalize, xticks_rotation=70)
+        disp.ax_.set_title(title)
+
+        # print(title)
+        # print(disp.confusion_matrix)
+
     plt.show()
 
 

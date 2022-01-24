@@ -11,11 +11,11 @@ import plots
 
 test_directory = 'dataset/Own_complete_split/test'                                      # define directory of unseen test data
 
+
 class_labels = ['A', 'B', 'C', 'D', 'DEL', 'E', 'ENTER', 'F', 'G', 'H',
                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
                 'S', 'SPACE', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
                 '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-
 # class_labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'unknown']
 
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     predictions = model.predict(test_generator, steps=steps_per_epoch, verbose=1)
 
     # plot Confusion Matrix and Classification Report
-    plots.plot_confusion_matrix(test_generator.classes, predictions, class_labels)  # true_classes, predicted_classes, labels_of_classes
+    plots.plot_confusion_matrix_cnn(test_generator.classes, predictions, class_labels)  # true_classes, predicted_classes, labels_of_classes
 
     # plot multiclass ROC curve with
     plots.plot_roc(test_generator.classes, predictions, class_labels)

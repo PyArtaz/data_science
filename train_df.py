@@ -28,6 +28,11 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, accuracy_score, confusion_matrix, classification_report
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
+from sklearn.decomposition import FastICA
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import Normalizer
+from tpot.export_utils import set_param_recursive
 import pickle
 
 # activate for GPU acceleration
@@ -40,6 +45,10 @@ import pickle
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
 dataset_path = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'
+class_labels = ['A', 'B', 'C', 'D', 'DEL', 'E', 'ENTER', 'F', 'G', 'H',
+                'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+                'S', 'SPACE', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
 ################################################################################################################################################################
@@ -47,7 +56,7 @@ dataset_path = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'
 ################################################################################################################################################################
 
 # load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
-def load_dataframe():
+def load_dataframe(dataset_path, resampling='over'):
     df = pd.read_csv(dataset_path, index_col=0)
 
     print("\nLoaded dataset into dataframe:")
@@ -58,9 +67,12 @@ def load_dataframe():
 
     # plot_class_occurrences(y)
 
-    X_resampled, y_resampled = oversample_class_occurrences(X, y)
-
-    # plot_class_occurrences(y_resampled)
+    if resampling == 'over':
+        X_resampled, y_resampled = oversample_class_occurrences(X, y)
+    elif resampling == 'under':
+        X_resampled, y_resampled = undersample_class_occurrences(X, y)
+    else:
+        pass
 
     X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42, shuffle=True, stratify=y_resampled)
 
@@ -81,17 +93,18 @@ def plot_class_occurrences(class_list):
 
 
 def oversample_class_occurrences(X, y):
-    class_occurrences = collections.Counter(y)
-    max_class_occurrence = class_occurrences[max(class_occurrences, key=class_occurrences.get)]
-    min_class_occurrence = class_occurrences[max(class_occurrences, key=class_occurrences.get)]
-    mean_class_occurrence = int(len(y)/len(class_occurrences)+0.5)       # number of data points divided by number of classes (added 0.5 for correct int rounding)
+
 
     # define oversampling strategy
     over = SMOTE()  # RandomOverSampler(random_state=42, sampling_strategy=mean_class_occurrence/max_class_occurrence)
     # fit and apply the transform
     X_resampled, y_resampled = over.fit_resample(X, y)
 
+    class_occurrences = collections.Counter(y)
     class_occurrences_resampled = collections.Counter(y_resampled)
+    max_class_occurrence = class_occurrences[max(class_occurrences, key=class_occurrences.get)]
+    min_class_occurrence = class_occurrences[max(class_occurrences, key=class_occurrences.get)]
+    mean_class_occurrence = int(len(y)/len(class_occurrences)+0.5)       # number of data points divided by number of classes (added 0.5 for correct int rounding)
 
     print('Original dataset shape:', dict(sorted(class_occurrences.items(), key=lambda i: i[0])))
     print('Resample dataset shape:', dict(sorted(class_occurrences_resampled.items(), key=lambda i: i[0])))
@@ -114,12 +127,12 @@ def undersample_class_occurrences(X, y):
     return X_resampled, y_resampled
 
 
-def plot_statistics(y_test, predictions):
-    # print('ROCAUC score:', roc_auc_score(y_test, predictions, multi_class='ovr'))
+def print_statistics(y_test, predictions):
+    # print('ROCAUC score:', "%.2f" % roc_auc_score(y_test, predictions, multi_class='ovr'))
     print('Accuracy score:', "%.2f" % (accuracy_score(y_test, predictions) * 100))
     print('F1 score:', "%.2f" % (f1_score(y_test, predictions, average='weighted') * 100))
 
-    print(confusion_matrix(y_test, predictions))
+    # print(confusion_matrix(y_test, predictions))
     print(classification_report(y_test, predictions))
 
     # ToDo: plot Confusion Matrix and ROC
@@ -128,7 +141,7 @@ def plot_statistics(y_test, predictions):
 
 
 
-def perform_grid_search(X_train, y_train):
+def perform_svc_grid_search(X_train, y_train):
     param_grid = {'C': [0.1, 1, 10], 'degree': [3, 5, 7], 'gamma': [1, 5, 10]}  # , 'kernel': ['rbf', 'poly', 'sigmoid']}
 
     # we can add class_weight='balanced' to add panalize mistake
@@ -142,21 +155,29 @@ def perform_grid_search(X_train, y_train):
     return grid
 
 
-def perform_tpot_search(X_train, y_train):
+def perform_tpot_search(X_train, X_test, y_train, y_test):
     # define search
-    tpot = TPOTClassifier(generations=50, population_size=100, cv=10,
+    tpot = TPOTClassifier(generations=2, population_size=2, cv=10,
                                     random_state=42, verbosity=2, n_jobs=-1)
+
+    # tpot = TPOTClassifier(generations=50, population_size=100, cv=10,
+    #                       random_state=42, verbosity=2, n_jobs=-1)
+
     # perform the search
     tpot.fit(X_train, y_train)
-    print(tpot.score(X_test, y_test))
 
     # export the best model
-    tpot.export('tpot_model' + timestr + '.py')
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    tpot.export('tpot_model_' + timestr + '.py')
+
+    # print(tpot.score(X_test, y_test))
 
     return tpot
 
+
 def save_trained_model(model):
     # create model filename
+    timestr = time.strftime("%Y%m%d-%H%M%S")
     filename = 'dataset/saved_model/' + timestr + '_model'
 
     # now you can save it to a file
@@ -169,23 +190,26 @@ def save_trained_model(model):
     print('Saved model to disk: ' + filename)
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
-    timestr = time.strftime("%Y%m%d-%H%M%S")
     start_time = time.time()
 
-    # load image data
-    X_train, X_test, y_train, y_test = load_dataframe()
+    # load hand_landmark data
+    X_train, X_test, y_train, y_test = load_dataframe(dataset_path, resampling='over')
 
     # either: search for suitable model by manual grid search or automated evolutionary search
-    # model = perform_grid_search(X_train.values, y_train)         # manual grid search
-    # model = perform_tpot_search(X_train.values, y_train)         # automated evolutionary algorithm search
+    # model = perform_svc_grid_search(X_train.values, y_train)                          # manual grid search
+    # model = perform_tpot_search(X_train.values, X_test.values, y_train, y_test)         # automated evolutionary algorithm search
 
     # or: use previously found optimal model
     # model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
-    #model = KNeighborsClassifier(Normalizer(FastICA(Normalizer(OneHotEncoder(input_matrix, minimum_fraction=0.25, sparse=False, threshold=10), norm=l2), tol=0.1), norm=l1),n_neighbors=1, p=1, weights=distance)
-    model = sklearn.neighbors.KNeighborsClassifier(
-        sklearn.preprocessing.Normalizer(
-            sklearn.decomposition.FastICA(
-                sklearn.preprocessing.Normalizer(tpot.builtins.OneHotEncoder(input_matrix, minimum_fraction=0.25, sparse=False, threshold=10), norm=keras.regularizers.l2), tol=0.1), norm=keras.l1), n_neighbors=1, p=1, weights=scipy.spatial.distance)
+
+    # Average CV score on the training set was: 0.9902066338820076
+    model = make_pipeline(
+        # tpot.builtins.OneHotEncoder(y_train, minimum_fraction=0.25, sparse=False, threshold=10),
+        Normalizer(norm="l2"),
+        FastICA(tol=0.1),
+        Normalizer(norm="l1"),
+        KNeighborsClassifier(n_neighbors=1, p=1, weights="distance")
+    )
     model.fit(X_train.values, y_train)
 
     save_trained_model(model)
@@ -195,5 +219,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
 
     predictions = model.predict(X_test)  # check performance
 
-    plot_statistics(y_test, predictions)
+    print_statistics(y_test, predictions)
+
+    # plot confusion matrix in unnormalized and normalized fashion
     plots.plot_cm(model, X_test, y_test)
