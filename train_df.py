@@ -8,6 +8,7 @@ import os
 import keras.regularizers
 import scipy.spatial.distance
 import sklearn.decomposition
+import sklearn.metrics
 import sklearn.neighbors
 import sklearn.preprocessing
 import tpot.builtins
@@ -200,26 +201,28 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # model = perform_tpot_search(X_train.values, X_test.values, y_train, y_test)         # automated evolutionary algorithm search
 
     # or: use previously found optimal model
-    # model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
+    model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
 
     # Average CV score on the training set was: 0.9902066338820076
-    model = make_pipeline(
-        # tpot.builtins.OneHotEncoder(y_train, minimum_fraction=0.25, sparse=False, threshold=10),
-        Normalizer(norm="l2"),
-        FastICA(tol=0.1),
-        Normalizer(norm="l1"),
-        KNeighborsClassifier(n_neighbors=1, p=1, weights="distance")
-    )
+    # model = make_pipeline(
+    #     Normalizer(norm="l2"),
+    #     FastICA(tol=0.1),
+    #     Normalizer(norm="l1"),
+    #     KNeighborsClassifier(n_neighbors=1, p=1, weights="distance")
+    # )
     model.fit(X_train.values, y_train)
 
-    save_trained_model(model)
+    # save_trained_model(model)
 
     pred_time = time.time() - start_time
     print("\nRuntime", pred_time, "s")
 
     predictions = model.predict(X_test)  # check performance
 
+    # ToDo: 10- fold cross-validation
+
     print_statistics(y_test, predictions)
 
     # plot confusion matrix in unnormalized and normalized fashion
     plots.plot_cm(model, X_test, y_test)
+

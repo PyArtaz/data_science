@@ -3,14 +3,17 @@
 # 1 | INFO | Filter out INFO messages
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
-import itertools
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import itertools
 
 import matplotlib.pyplot as plt
+import numpy
 import numpy as np
 import sklearn.metrics
+import sklearn.model_selection
+from sklearn.model_selection import RepeatedStratifiedKFold
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import pandas as pd
 import plots
 import joblib
@@ -46,13 +49,12 @@ def load_df(test_directory):
     print(df.head())
 
     X, y = df.iloc[:, :-1], df.iloc[:, -1].values
-    #y = y.astype(str)
+    y = y.astype(str)
 
     image_labels_dict = {1:'A', 2:'B', 3:'C', 4:'D', 5:'E', 6:'F', 7:'G', 8:'H', 9:'I', 10:'J', 11:'K', 12:'L', 13:'M', 14:'N', 15:'O', 16:'P', 17:'Q', 18:'R',
                          19:'S', 20:'T', 21:'U', 22:'V', 23:'W', 24:'X', 25:'Y', 26:'Z', 27:'AE', 28:'OE', 29:'UE', 30:'SCH',
                          31:'1', 32:'2', 33:'3', 34:'4', 35:'5'}
-
-    y = [image_labels_dict.get(item, item) for item in y]
+    #y = [image_labels_dict.get(item, item) for item in y]
 
     return X, y
 
@@ -71,7 +73,7 @@ def plot_cm_2(cm, title='Confusion matrix', cmap=plt.cm.Oranges):
     plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(cm.shape[1])
-    plt.xticks(tick_marks, rotation=45)
+    plt.xticks(tick_marks, rotation=60)
     ax = plt.gca()
     ax.set_xticklabels((ax.get_xticks() +1).astype(str))
     plt.yticks(tick_marks)
@@ -100,8 +102,26 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # Generate predictions for samples
     predictions = model.predict(X_test)
 
-    # plot Confusion Matrix and Classification Report
-    plot_cm(model, X_test, y_test)
+    #scores = sklearn.model_selection.cross_val_score(model, X_test, y_test, cv=10)
+
+    # Create StratifiedKFold object.
+    rskf = RepeatedStratifiedKFold(n_splits=10, n_repeats=10, random_state=42)
+    scores = sklearn.model_selection.cross_val_score(model, X_test, y_test, cv=rskf)
+
+    # Print the output.
+    print('List of possible accuracy:', scores)
+    print('\nMaximum Accuracy That can be obtained from this model is:',
+          max(scores) * 100, '%')
+    print('\nMinimum Accuracy:',
+          min(scores) * 100, '%')
+    print('\nOverall Accuracy:',
+          np.mean(scores) * 100, '%')
+    print('\nStandard Deviation is:', np.std(scores))
+
+
+
+    # plot confusion matrix in unnormalized and normalized fashion
+    plots.plot_cm(model, X_test, y_test)
 
     # plot multiclass ROC curve with
     #plots.plot_roc(y_test, predictions, class_labels)
