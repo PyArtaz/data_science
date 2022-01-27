@@ -20,7 +20,7 @@ def loadVid():
     window_name = "SigNum"
 
     # For webcam input:
-    cap = cv2.VideoCapture(4)
+    cap = cv2.VideoCapture(0)
 
     # FPS
     fps_start = 0
