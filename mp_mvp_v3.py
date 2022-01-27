@@ -12,7 +12,7 @@ import numpy as np
 from util_mvp import landmark_to_array, flip_coordinates, mode, annotate_image, calc_dps
 import bounding_box_mvp as bb
 import predictor
-
+jetson_nano_on = True
 
 class Window(QMainWindow, Ui_MainWindow):
 
@@ -35,6 +35,33 @@ class Window(QMainWindow, Ui_MainWindow):
     def ImageUpdateSlot(self, Image):
         self.ui.w_vid.setPixmap(QPixmap.fromImage(Image))
 
+if(jetson_nano_on):
+    def gstreamer_pipeline(
+    capture_width=1280,
+   	capture_height=720,
+   	display_width=1280,
+   	display_height=720,
+        framerate=60,
+        flip_method=0,
+        ):
+            return (
+                "nvarguscamerasrc ! "
+                "video/x-raw(memory:NVMM), "
+                "width=(int)%d, height=(int)%d, "
+                "format=(string)NV12, framerate=(fraction)%d/1 ! "
+                "nvvidconv flip-method=%d ! "
+                "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=(string)BGR ! appsink"
+                % (
+                    capture_width,
+                    capture_height,
+                    framerate,
+                    flip_method,
+                    display_width,
+                    display_height,
+                )
+            ) 
 
 class working1(QThread):
     ImageUpdate = pyqtSignal(QImage)
@@ -42,8 +69,14 @@ class working1(QThread):
 
     def run(self):
         self.ThreadActive = True
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
+	
+        if(jetson_nano_on):
+            cap = cv2.VideoCapture(gstreamer_pipeline(), cv2.CAP_GSTREAMER)
+        else:
+            cap = cv2.VideoCapture(0)
+            
+        if not cap.isOpened(): 
+            print("Cant access Camera")
             return
 
         ## KI STUFF
