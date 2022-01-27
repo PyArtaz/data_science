@@ -1,7 +1,7 @@
 from os import walk, path, makedirs
 
 import numpy as np
-
+import time
 import mediapipe as mp
 import cv2
 
@@ -69,8 +69,7 @@ def gen_xyz_col_names(features=21):
     for feature in range(features):
         col_names += [dir_name + str(feature) for dir_name in dir_names]
 
-    return col_names
-    
+    return col_names   
     
 def flip_coordinates(coordinates, axis=0):
     """
@@ -212,3 +211,9 @@ def img_coordinates(landmarks, img_height, img_width):
     landmarks_y *= img_height
 
     return landmarks_x, landmarks_y
+
+def calc_dps(fps_start):
+    dps = 1 / (time.time() - fps_start)
+    fps_start = time.time()
+
+    return dps, fps_start 
