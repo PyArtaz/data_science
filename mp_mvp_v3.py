@@ -122,10 +122,7 @@ class working1(QThread):
 
                         # Calculate probabilities of each class based on mode and maximum probability
                         prediction, prob_prediction = latest_predictor.get_all_predictions()
-                        # Verify prediction of 5 using a second model that was trained only on numbers
-#                        if prediction == 5:
-#                            numbers_predictor.update_prediction(landmarks_bb)
-#                            prediction = numbers_predictor.get_prediction()
+                        # Verify prediction of 5 using a second model that was trained only on numbers                    
                         probability_dict = latest_predictor.create_probability_dict()
                         print(probability_dict)
 
@@ -135,11 +132,12 @@ class working1(QThread):
 
                         data_logger.add_prediction(prediction)
                         print(prediction)
-#                    if data_logger.timeout():
-#                        if data_logger.final_prediction() is not None:
-#                            string_buffer += data_logger.final_prediction()
-#                        else:
-#                            print('Detection failed, retrying!')
+                        
+                    if data_logger.timeout():
+                        if data_logger.final_prediction() is not None:
+                            string_buffer += data_logger.final_prediction()
+                        else:
+                            print('Detection failed, retrying!')
 
 
                     font = cv2.FONT_HERSHEY_SIMPLEX
