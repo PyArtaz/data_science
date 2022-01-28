@@ -217,3 +217,51 @@ def calc_dps(fps_start):
     fps_start = time.time()
 
     return dps, fps_start 
+
+def functionality_mapper(prediction, text_box):
+    """
+    Maps the predictions Space, Del and Enter to their respective functions on the Qt textBox.
+
+    Parameters
+    ----------
+    prediction : str
+        The final prediction made by the DataLogger object.
+    text_box : QTextEdit
+        An object of class QTextEdit, that the actions are performed on
+
+    Returns
+    -------
+    """
+    if prediction == 'SPACE':
+        text_box.insertPlainText(' ')
+    elif prediction == 'DEL':
+        text_box.textCursor().deletePreviousChar()
+    elif prediction == 'ENTER':
+        text_box.insertPlainText('\n')
+    else:
+        text_box.insertPlainText(prediction)
+
+def prediction_checker(pred, correction_set):
+    """
+    Check, whether a passed prediction is often wrong and can be corrected by the specified correction_set.
+
+    Parameters
+    ----------
+    pred : str
+        The prediction made by the model to be corrected.
+    correction_set: str
+        The model that is used for correction. Options are 'Letters+Numbers' and 'ASLL'
+
+    Returns
+    -------
+    bool
+        True if it is a correctable but problematic prediction, False otherwise.
+
+    """
+    prob_inputs = asl_dict_min(correction_set)
+    is_problematic = False
+
+    if pred in prob_inputs:
+        is_problematic = prob_inputs[pred]
+
+    return is_problematic        
