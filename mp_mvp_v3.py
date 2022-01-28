@@ -193,7 +193,8 @@ class working1(QThread):
                     # Write current prediction to Qlabel
                     win.ui.current_prediction.setText(prediction_string)    
                     dps, fps_start = calc_dps(fps_start)
-                    #cv2.putText(image, 'FPS: {:.2f}'.format(dps), (5, 30), font, 1, (0, 255, 255), 1)    
+                    font                   = cv2.FONT_HERSHEY_SIMPLEX
+                    cv2.putText(image, 'FPS: {:.2f}'.format(dps), (5, 30), font, 1, (0, 255, 255), 1)    
                     # show image in QT GUI
                     QtImg = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)
                     pic = QtImg.scaled(1280, 720, Qt.KeepAspectRatio)  # Qt Keep Aspect Ratio if needed
