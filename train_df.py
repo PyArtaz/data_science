@@ -26,7 +26,7 @@ import collections
 from imblearn.combine import SMOTEENN
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score, roc_auc_score, confusion_matrix, classification_report
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 from sklearn.decomposition import FastICA
@@ -45,7 +45,7 @@ import pickle
 # Training parameters
 ################################################################################################################################################################
 # dataset_path = prep.dataset_path  # Enter the directory of the training images
-dataset_path = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'
+dataset_path = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix_Digits_with_enter-space-del.csv'
 class_labels = ['A', 'B', 'C', 'D', 'DEL', 'E', 'ENTER', 'F', 'G', 'H',
                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
                 'S', 'SPACE', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -131,6 +131,8 @@ def undersample_class_occurrences(X, y):
 def print_statistics(y_test, predictions):
     # print('ROCAUC score:', "%.2f" % roc_auc_score(y_test, predictions, multi_class='ovr'))
     print('Accuracy score:', "%.2f" % (accuracy_score(y_test, predictions) * 100))
+    print('Precision score:', "%.2f" % (precision_score(y_test, predictions, average='weighted') * 100))
+    print("Recall:", "%.2f" % (recall_score(y_test, predictions, average='weighted') * 100))
     print('F1 score:', "%.2f" % (f1_score(y_test, predictions, average='weighted') * 100))
 
     # print(confusion_matrix(y_test, predictions))
@@ -197,22 +199,15 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     X_train, X_test, y_train, y_test = load_dataframe(dataset_path, resampling='over')
 
     # either: search for suitable model by manual grid search or automated evolutionary search
-    # model = perform_svc_grid_search(X_train.values, y_train)                          # manual grid search
-    # model = perform_tpot_search(X_train.values, X_test.values, y_train, y_test)         # automated evolutionary algorithm search
+    # model = perform_svc_grid_search(X_train.values, y_train)                              # manual grid search
+    # model = perform_tpot_search(X_train.values, X_test.values, y_train, y_test)           # automated evolutionary algorithm search
 
     # or: use previously found optimal model
     model = SVC(class_weight='balanced', probability=True, kernel='poly', degree=3, C=0.1, gamma=5)      # was best model so far
 
-    # Average CV score on the training set was: 0.9902066338820076
-    # model = make_pipeline(
-    #     Normalizer(norm="l2"),
-    #     FastICA(tol=0.1),
-    #     Normalizer(norm="l1"),
-    #     KNeighborsClassifier(n_neighbors=1, p=1, weights="distance")
-    # )
     model.fit(X_train.values, y_train)
 
-    # save_trained_model(model)
+    save_trained_model(model)
 
     pred_time = time.time() - start_time
     print("\nRuntime", pred_time, "s")

@@ -3,12 +3,15 @@
 # 1 | INFO | Filter out INFO messages
 # 2 | WARNING | Filter out INFO & WARNING messages
 # 3 | ERROR | Filter out all messages
+import collections
 import os
+
+import imblearn.under_sampling
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import itertools
 
 import matplotlib.pyplot as plt
-import numpy
 import numpy as np
 import sklearn.metrics
 import sklearn.model_selection
@@ -21,21 +24,22 @@ import glob
 import seaborn as sns
 
 
-class_labels = ['A', 'B', 'C', 'D', 'del', 'E', 'F', 'G', 'H', 'I',
+class_labels = ['A', 'B', 'C', 'D', 'Del', 'E', 'Enter', 'F', 'G', 'H', 'I',
                 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-                'S', 'space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+                'S', 'Space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
                 '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 
 def load_latest_model():
     # Directory path containing saved models
-    directory = 'dataset/saved_model/'
+    directory = 'dataset/models/'
     # necessary to load the latest saved model in the model folder
-    list_of_files = glob.glob(directory + '*.sav')  # '*' means all if need specific format then e.g.: '*.sav'
+    list_of_files = glob.glob(directory + 'model_Own_landmarks_bb_squarePix_Letters+Digits.sav')  # '*' means all if need specific format then e.g.: '*.sav'
     if len(list_of_files) == 0:
         print("Could not find any model in directory:", directory)
     else:
         latest_file = max(list_of_files, key=os.path.getmtime)
+        print("Loaded model: " + str(latest_file))
 
         # load trained model
         model = joblib.load(latest_file)
@@ -49,6 +53,7 @@ def load_df(test_directory):
     print(df.head())
 
     X, y = df.iloc[:, :-1], df.iloc[:, -1].values
+    X, y = undersample_class_occurrences(X, y)
     y = y.astype(str)
 
     image_labels_dict = {1:'A', 2:'B', 3:'C', 4:'D', 5:'E', 6:'F', 7:'G', 8:'H', 9:'I', 10:'J', 11:'K', 12:'L', 13:'M', 14:'N', 15:'O', 16:'P', 17:'Q', 18:'R',
@@ -57,6 +62,20 @@ def load_df(test_directory):
     #y = [image_labels_dict.get(item, item) for item in y]
 
     return X, y
+
+def undersample_class_occurrences(X, y):
+    # define undersampling strategy
+    under = imblearn.under_sampling.RandomUnderSampler(random_state=42)
+    # fit and apply the transform
+    X_resampled, y_resampled = under.fit_resample(X, y)
+
+    class_occurrences = collections.Counter(y)
+    class_occurrences_resampled = collections.Counter(y_resampled)
+
+    print('Original dataset shape:', dict(sorted(class_occurrences.items(), key=lambda i: i[0])))
+    print('Resampled dataset shape:', dict(sorted(class_occurrences_resampled.items(), key=lambda i: i[0])))
+
+    return X_resampled, y_resampled
 
 def plot_cm(model, X_test, y_test):
     # Generate confusion matrix
@@ -88,10 +107,59 @@ def plot_cm_2(cm, title='Confusion matrix', cmap=plt.cm.Oranges):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
 
+def plot_multiclass_roc(clf, X_test, y_test, class_labels, n_classes, figsize=(17, 6)):
+    y_score = clf.decision_function(X_test)
+
+    # structures
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    # calculate dummies once
+    y_test_dummies = pd.get_dummies(y_test, drop_first=False).values
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = sklearn.metrics.roc_curve(y_test_dummies[:, i], y_score[:, i])
+        roc_auc[i] = sklearn.metrics.auc(fpr[i], tpr[i])
+
+    # roc for each class
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot([0, 1], [0, 1], 'k--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('Receiver operating characteristic example')
+    for i in range(n_classes):
+        ax.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f) for label %s' % (roc_auc[i], class_labels[i]))
+    plt.legend(loc = 'lower right', prop = {'size': 7})
+    ax.grid(alpha=.4)
+    sns.despine()
+    plt.show()
+
+
+def calculate_scores(model, X_test, y_test):
+    # define metrics to evaluate model performance
+    scoring = ['accuracy', 'precision_weighted', 'recall_weighted', 'f1_weighted']
+
+    # Create StratifiedKFold object.
+    rskf = RepeatedStratifiedKFold(n_splits=10, n_repeats=10, random_state=42)
+    scores = sklearn.model_selection.cross_validate(model, X_test, y_test, cv=rskf, scoring=scoring)
+
+    # Print the output.
+    for metric in scoring:
+        # print('List of possible metrics that can be obtained from this model:', scores)
+        dict_key = 'test_' + metric
+        print('\nMaximum ', metric, ':', max(scores[dict_key]) * 100, '%')
+        print('Minimum ', metric, ':', min(scores[dict_key]) * 100, '%')
+        print('Overall ', metric, ':', np.mean(scores[dict_key]) * 100, '%')
+        print('Standard Deviation of ', metric, ':', np.std(scores[dict_key]))
+
+
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # define directory of unseen test data
-    test_directory = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
+    # test_directory = 'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_replaced_landmarks_bb.csv'  #  'dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_landmarks_bb.csv'  #  'dataset/hand_landmarks/Image/Image_landmarks_bb_squarePix_without_umlauts_or_digits.csv'
     #test_directory = 'dataset/hand_landmarks/asl_alphabet+digits_landmarks_bb.csv'
+    test_directory = 'dataset/hand_landmarks/Own/Own_landmarks_bb_squarePix_Letters+Digits.csv'
 
     # load test images
     X_test, y_test = load_df(test_directory)
@@ -102,28 +170,13 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     # Generate predictions for samples
     predictions = model.predict(X_test)
 
-    #scores = sklearn.model_selection.cross_val_score(model, X_test, y_test, cv=10)
-
-    # Create StratifiedKFold object.
-    rskf = RepeatedStratifiedKFold(n_splits=10, n_repeats=10, random_state=42)
-    scores = sklearn.model_selection.cross_val_score(model, X_test, y_test, cv=rskf)
-
-    # Print the output.
-    print('List of possible accuracy:', scores)
-    print('\nMaximum Accuracy That can be obtained from this model is:',
-          max(scores) * 100, '%')
-    print('\nMinimum Accuracy:',
-          min(scores) * 100, '%')
-    print('\nOverall Accuracy:',
-          np.mean(scores) * 100, '%')
-    print('\nStandard Deviation is:', np.std(scores))
-
-
+    # calculate metrics for model evaluation (accuracy, precision, recall, f1_score)
+    calculate_scores(model, X_test, y_test)
 
     # plot confusion matrix in unnormalized and normalized fashion
-    plots.plot_cm(model, X_test, y_test)
+    plots.plot_cm(model, X_test, y_test)        # ToDO: Werte ausblenden
 
-    # plot multiclass ROC curve with
-    #plots.plot_roc(y_test, predictions, class_labels)
+    # plot multiclass ROC curve
+    plot_multiclass_roc(model, X_test, y_test, class_labels, n_classes=len(np.unique(y_test)), figsize=(16, 10))
 
 

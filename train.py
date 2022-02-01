@@ -28,7 +28,7 @@ import preprocessing as prep
 chkp_filepath = 'dataset/saved_model/checkpoints'  # Enter the filename you want your model to be saved as
 dataset_path = prep.dataset_path  # Enter the directory of the training images
 
-epochs = 50
+epochs = 20
 batch_size = 32
 image_size = prep.image_size
 IMAGE_SIZE = prep.IMAGE_SIZE    # re-size all the images to this
@@ -71,7 +71,6 @@ def load_training_images():
                                    rotation_range=20,
                                    width_shift_range=0.2,
                                    height_shift_range=0.2,
-                                   shear_range=0.2,
                                    zoom_range=0.2,
                                    brightness_range=[0.8, 1.2],
                                    fill_mode='nearest')  # ,  horizontal_flip=True , label_mode='categorical')
