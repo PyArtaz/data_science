@@ -11,7 +11,7 @@ import mediapipe as mp
 from util import landmark_to_array, flip_coordinates, annotate_image, calc_dps
 import bounding_box_mvp as bb
 import predictor
-jetson_nano_on = False
+jetson_nano_on = True
 
 class Window(QMainWindow, Ui_MainWindow):
 
