@@ -13,8 +13,7 @@ from keras.applications.vgg16 import VGG16
 from keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras import layers
 from tensorflow.keras.models import Model
-from keras.layers import Input, Lambda, Dense, Flatten, Conv1D, Dropout, MaxPool1D, Flatten, Conv2D, MaxPool2D, BatchNormalization, MaxPooling2D
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Activation, BatchNormalization, Add, Input, ZeroPadding2D, AveragePooling2D,GlobalAveragePooling2D
+from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Flatten, Dense, BatchNormalization, MaxPool2D, Add, ZeroPadding2D
 import keras.optimizers
 import tensorflow as tf
 import preprocessing as prep
@@ -29,7 +28,6 @@ IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
 optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)  # tell the model what cost and optimization method to use
-# optimizer = tf.optimizers.SGD(learning_rate=0.001, momentum=0.9)  # , decay=0.01          # ToDo: try different optimizers
 
 
 ################################################################################################################################################################
@@ -42,19 +40,19 @@ def create_pretrained_model_densenet121():
     """
     source: https://github.com/tshr-d-dragon/Sign_Language_Gesture_Detection/blob/main/DenseNet121_MobileNetv2_10epochs.ipynb
     """
-    # add preprocessing layer to the front of VGG
+    # add preprocessing layer to the front of DenseNet121
     densenet = DenseNet121(input_shape=IMAGE_SIZE + [3], weights='imagenet', include_top=False)
 
     # don't train existing weights
     for layer in densenet.layers:
         layer.trainable = False
 
-    #for i, layer in enumerate(densenet.layers):
-    #    print(i, layer.name, layer.trainable)
+    # for i, layer in enumerate(densenet.layers):
+    #     print(i, layer.name, layer.trainable)
 
     num_of_classes = prep.get_num_of_classes()
 
-    # output layers - you can add more if you want
+    # output layers
     x = Flatten()(densenet.output)
     x = Dense(512, activation='relu')(x)        # 1000
     prediction = Dense(num_of_classes, activation=activation, name='predictions')(x)
@@ -81,16 +79,16 @@ def create_pretrained_model_vgg():
     for layer in model.layers[:-1]:
         layer.trainable = False
 
-    #for i, layer in enumerate(model.layers):
-    #    print(i, layer.name, layer.trainable)
+    # for i, layer in enumerate(model.layers):
+    #     print(i, layer.name, layer.trainable)
 
     # add new classifier layers
     flat = Flatten()(model.layers[-1].output)
-    #dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)  # 128
-    #drop1 = Dropout(0.5)(dense1)
-    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)  # (flat) # (drop1)      # 128
-    #drop2 = Dropout(0.5)(dense)
-    output = Dense(num_of_classes, activation=activation)(dense)  # (dense)  # (drop2)
+    # dense1 = Dense(1024, activation='relu', kernel_initializer='he_uniform')(flat)
+    # drop1 = Dropout(0.5)(dense1)
+    dense = Dense(256, activation='relu', kernel_initializer='he_uniform')(flat)
+    # drop2 = Dropout(0.5)(dense)
+    output = Dense(num_of_classes, activation=activation)(dense)
 
     # define new model
     model = Model(inputs=model.inputs, outputs=output)
@@ -109,9 +107,7 @@ def create_pretrained_model_inception_v3():
 
     inception_v3_model = InceptionV3(input_shape=(image_size, image_size, 3), include_top=False, weights='imagenet')
 
-    # Not required --> inception_v3_model.load_weights(WEIGHTS_FILE)
-
-    # Enabling the top 2 inception blocks to train
+    # Enabling the top two inception blocks to train
     for layer in inception_v3_model.layers[:249]:
         layer.trainable = False
     for layer in inception_v3_model.layers[249:]:
@@ -122,17 +118,13 @@ def create_pretrained_model_inception_v3():
 
     # Choosing the inception output layer:
 
-    # Choosing the output layer to be merged with our FC layers (if required)
-    inception_output_layer = inception_v3_model.get_layer('mixed7')
-    # print('Inception model output shape:', inception_output_layer.output_shape)
-
-    # Not required --> inception_output = inception_output_layer.output
-    inception_output = inception_v3_model.output        # Inception model output shape: (None, 10, 10, 768)
+    # Choosing the output layer to be merged with our Fully Connected layers (if required)
+    inception_output = inception_v3_model.output
 
     # Adding our own set of fully connected layers at the end of Inception v3 network:
     x = layers.GlobalAveragePooling2D()(inception_output)
     x = layers.Dense(256, activation='relu')(x)
-    # x = layers.Dropout(0.2)(x)                                             # Todo: Evaluate accuracy with and without dropout Layer
+    # x = layers.Dropout(0.2)(x)
     x = layers.Dense(num_of_classes, activation=activation)(x)
 
     model = Model(inception_v3_model.input, x)
@@ -150,11 +142,12 @@ def create_custom_model_2d_cnn():
     num_of_classes = prep.get_num_of_classes()
     model = Sequential()
 
-    # We are using 4 convolution layers for feature extraction
+    # We are using multiple convolution layers for feature extraction
     model.add(Conv2D(64, (3, 3), strides=(1, 1), input_shape=[image_size, image_size, 3], kernel_initializer='glorot_uniform'))
     model.add(keras.layers.ELU())
     model.add(BatchNormalization())
-    # consider using Dropout layers to prevent overfitting
+
+    # use Dropout layers to prevent overfitting
     model.add(Dropout(0.2))  # This is the dropout layer. It's main function is to inactivate 20% of neurons in order to prevent overfitting
     model.add(Conv2D(64, (3, 3), strides=(1, 1), kernel_initializer='glorot_uniform'))
     model.add(keras.layers.ELU())
@@ -186,22 +179,14 @@ def create_custom_model_2d_cnn():
     model.add(BatchNormalization())
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
 
-    # The prevous step gives an output of multi dimentional data, which cannot be fead directly into the feed forward neural network. Hence, the model is flattened
-    #model.add(Flatten())
-    ## One hidden layer of 2048 neurons have been used in order to have better classification results    # ToDo: compare classification results for different sizes of hidden layer
-    #model.add(Dense(2048))  # , kernel_initializer='normal', activation='relu'))
-    #model.add(keras.layers.ELU())
-    #model.add(BatchNormalization())
-    #model.add(Dropout(0.5))
-    ## The final neuron HAS to be of the same number as classes to predict and cannot be more than that.
-    #model.add(Dense(num_of_classes, activation='softmax'))  # , activation='sigmoid'))
-
     # Final layer
     model.add(Flatten())
+    # Two hidden layers of 4096 and 2048 neurons have been used in order to achieve better classification results
     model.add(Dense(4096, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(2048, activation='relu'))
     model.add(Dropout(0.1))
+    # The final neuron HAS to be of the same number as classes to predict and cannot be more than that.
     model.add(Dense(num_of_classes, activation=activation))
 
     model.compile(loss=crossentropy, optimizer='adam', metrics=['accuracy'])
