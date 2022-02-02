@@ -6,16 +6,14 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
-import tensorflow as tf
 import numpy as np
 from sklearn.utils import class_weight
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-import plots
-import models
-import matplotlib as plt
+import cnn_plots
+import cnn_models
 import pandas as pd
-import preprocessing as prep
+import util
 
 # activate for GPU acceleration
 # gpu_options = tf.compat.v1.GPUOptions(allow_growth=True)
@@ -25,15 +23,13 @@ import preprocessing as prep
 ################################################################################################################################################################
 # Training parameters
 ################################################################################################################################################################
-chkp_filepath = 'dataset/saved_model/checkpoints'  # Enter the filename you want your model to be saved as
-dataset_path = prep.dataset_path  # Enter the directory of the training images
+dataset_path = util.dataset_path                    # Enter the directory of the training images
 
-epochs = 20
+epochs = 50
 batch_size = 32
-image_size = prep.image_size
-IMAGE_SIZE = prep.IMAGE_SIZE    # re-size all the images to this
+image_size = util.image_size
+IMAGE_SIZE = util.IMAGE_SIZE    # re-size all the images to this
 save_trained_model = True
-color_mode = 'rgb'  # Notiz: mit color_mode='grayscale' passen die 1 dimensionalen Bilder ggf. nicht mehr zur vortrainierten Modellarchitektur für rgb Bilder
 
 use_reduced_dataset = False     # set true to use a reduced dataset with a total amount of num_train_images
 num_train_images = 1000
@@ -57,23 +53,22 @@ def subset_training_images(num_train_images):
         labels.extend([sub_dir] * len(image_list))
 
     df = pd.DataFrame({"Images": images, "Labels": labels})
-    df = df.sample(frac=1).reset_index(drop=True)  # To shuffle the data # ToDo: subset df with equal class occurences
-    df = df.head(num_train_images)  # to take the subset of data (I'm taking 100 from it)
+    df = df.sample(frac=1).reset_index(drop=True)   # To shuffle the data
+    df = df.head(num_train_images)                  # take the smaller subset of data
     print(df)
 
     return df
 
 
-# load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate training data
+# load image data and convert it to the right dimensions to train the model. Image data augmentation is uses to generate more variability in training data
 def load_training_images():
-    # ToDo: find good parameters. fill_mode='nearest' produces strange results with fingers
     train_gen = ImageDataGenerator(rescale=1. / 255.,
                                    rotation_range=20,
                                    width_shift_range=0.2,
                                    height_shift_range=0.2,
                                    zoom_range=0.2,
                                    brightness_range=[0.8, 1.2],
-                                   fill_mode='nearest')  # ,  horizontal_flip=True , label_mode='categorical')
+                                   fill_mode='constant')  # ,  horizontal_flip=True , label_mode='categorical')
 
     val_gen = ImageDataGenerator(rescale=1. / 255.)
 
@@ -86,10 +81,9 @@ def load_training_images():
                                                         class_mode="categorical",
                                                         batch_size=batch_size,
                                                         target_size=IMAGE_SIZE,
-                                                        color_mode=color_mode,
+                                                        color_mode='rgb',
                                                         shuffle=True)
 
-        # ToDo: find error why val_acc & val_loss are not computed when using flow_from_dataframe
         valid_generator = val_gen.flow_from_dataframe(directory=dataset_path + '/val',
                                                       dataframe=df,
                                                       x_col="Images",
@@ -97,20 +91,20 @@ def load_training_images():
                                                       class_mode="categorical",
                                                       batch_size=batch_size,
                                                       target_size=IMAGE_SIZE,
-                                                      color_mode=color_mode,
+                                                      color_mode='rgb',
                                                       shuffle=True)
     else:
         train_generator = train_gen.flow_from_directory(dataset_path + '/train',
                                                         target_size=IMAGE_SIZE,
-                                                        color_mode=color_mode,
+                                                        color_mode='rgb',
                                                         shuffle=True,
                                                         batch_size=batch_size,
                                                         class_mode='categorical')
-        # save_to_dir=(train_path+'_augmented'))
+                                                        # save_to_dir=(dataset_path + '/train'+'_augmented'))
 
         valid_generator = val_gen.flow_from_directory(dataset_path + '/val',
                                                       target_size=IMAGE_SIZE,
-                                                      color_mode=color_mode,
+                                                      color_mode='rgb',
                                                       shuffle=True,
                                                       batch_size=batch_size,
                                                       class_mode='categorical')
@@ -118,16 +112,22 @@ def load_training_images():
     return train_generator, valid_generator
 
 
+# initialize checkpoints to save model weights after each epoch if the model's validation accuracy improved.
+# EarlyStopping stops training if the model does not longer improve over several epochs
 def create_checkpoints():
+    # Enter the directory for saving checkpoints during training
+    chkp_directory = 'saved_models/checkpoints'
+    util.create_folder(chkp_directory)
+
     # used to save checkpoints during training after each epoch
-    checkpoint = ModelCheckpoint(chkp_filepath, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
+    checkpoint = ModelCheckpoint(chkp_directory, monitor='val_accuracy', verbose=1, save_best_only=True, mode='max')
 
     # simple early stopping
     if use_reduced_dataset:
         es = EarlyStopping(monitor='accuracy', patience=8, min_delta=0.1, mode='max', restore_best_weights=True)
     else:
         # val_acc has to improve by at least 0.1 for it to count as an improvement
-        es = EarlyStopping(monitor='val_accuracy', patience=10, min_delta=0.01, mode='max', restore_best_weights=True)
+        es = EarlyStopping(monitor='val_accuracy', patience=10, min_delta=0.1, mode='max', restore_best_weights=True)
         # es = EarlyStopping(monitor='val_loss', mode='min', patience=10, verbose=1, restore_best_weights=True)
 
     callbacks_list = [checkpoint, es]
@@ -137,37 +137,31 @@ def create_checkpoints():
 
 # Train the model
 def train_model(model, train_generator, valid_generator):
-    callbacks_list = create_checkpoints()                               # deactivated below to prevent unnecessary savings during model optimization phase
+    # deactivated below to prevent unnecessary savings during model optimization phase
+    # callbacks_list = create_checkpoints()
 
     trainings_samples = train_generator.samples
     validation_samples = valid_generator.samples
 
     # calculate class_occurences of dataset
     class_occurences = dict(zip(*np.unique(train_generator.classes, return_counts=True)))
-    print("class_occurences: \t" + str(class_occurences))
+    print("\nclass occurences: \n" + str(class_occurences))
 
     # calculate class_weights of unbalanced data
     class_weights = class_weight.compute_class_weight(class_weight='balanced',
                                                       classes=np.unique(train_generator.classes),
                                                       y=train_generator.classes)
     train_class_weights = dict(zip(np.unique(train_generator.classes), class_weights))
-    print("train_class_weights: \t" + str(train_class_weights))
+    print("\nResulting class weights for training: \n" + str(train_class_weights))
 
-    r = model.fit(train_generator, validation_data=valid_generator, epochs=epochs, class_weight=train_class_weights,
+    history = model.fit(train_generator, validation_data=valid_generator, epochs=epochs, class_weight=train_class_weights,
                   steps_per_epoch=trainings_samples // batch_size,
                   validation_steps=validation_samples // batch_size)  # , callbacks=callbacks_list)
 
-    return r, model
+    return history, model
 
 
-def plot_statistics(model_name, history):
-    plot_directory = "dataset/plots/"
-    prep.create_folder(plot_directory)
-
-    # Plot the model accuracy graph
-    plots.plot_training_history(history, plot_directory + model_name)
-
-
+# create a dictionary containing the timestamp, model name and additional training parameters
 def create_logdict():
     dataset_name = dataset_path.split('/')[-1]        # dataset name used for detailed model name
 
@@ -182,6 +176,7 @@ def create_logdict():
     return log_dict
 
 
+# update the logging dictionary containing the model's training parameters with its training metrics
 def update_logdict():
     # get training metrics
     if use_reduced_dataset:
@@ -209,10 +204,10 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     train_generator, valid_generator = load_training_images()
 
     # load model that uses transfer learning
-    model_, model_name = models.create_pretrained_model_vgg()
+    model_, model_name = cnn_models.create_pretrained_model_vgg()
 
     # alternatively load model that uses custom architecture
-    # model_, model_name = models.create_custom_model_2d_cnn_v2()
+    # model_, model_name = cnn_models.create_custom_model_2d_cnn_v2()
 
     # View the structure of the model
     # model_.summary()
@@ -231,15 +226,14 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     log_dict = update_logdict()
 
     # create more detailed model name to distinguish saved models
-    detailed_model_name = prep.create_model_name(log_dict)
+    detailed_model_name = util.create_model_name(log_dict)
 
     # save trained model and logfile
     if save_trained_model:
-        prep.save_model_log(log_dict, detailed_model_name)
-        prep.save_model(model, detailed_model_name)
-        # save a graph plot of the models layer structure
-        # plots.plot_model_structure(model, detailed_model_name)
+        util.save_model_log(log_dict, detailed_model_name)
+        util.save_model(model, detailed_model_name)
 
-    # only plot statistics if whole dataset is used, otherwise history is missing val_acc & val_loss
+    # only plot statistics if whole dataset is used, otherwise the metrics val_acc & val_loss are missing in the model's history
     if not use_reduced_dataset:
-        plot_statistics(detailed_model_name, history)
+        # Plot the model accuracy graph
+        cnn_plots.plot_training_history(history)

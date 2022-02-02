@@ -3,15 +3,15 @@ import glob
 from keras.models import model_from_json
 from keras.preprocessing.image import ImageDataGenerator
 
-###############################
+##############################################################
 # Dataset parameters
-###############################
-dataset_path = 'dataset/digits_split'          # Enter the directory containing the training images
-model_directory = 'dataset/saved_model/'             # directory to save the model
+##############################################################
+dataset_path = '../dataset/digits_split'            # Enter the directory containing the training images
+model_directory = '../dataset/saved_models_cnn/'                 # directory to save the model
 
-##############################
+##############################################################
 # Training parameters
-##############################
+##############################################################
 image_size = 100
 IMAGE_SIZE = [image_size, image_size]               # re-size all the images to this
 
@@ -32,21 +32,21 @@ def get_num_of_classes():
 ################################################################################################################################################################
 # LOADING FUNCTIONS
 ################################################################################################################################################################
+
+# load the latest saved model in the model folder
 def load_latest_model():
-    # File path containing saved models
-    filepath = 'dataset/saved_model/'
     # necessary to load the latest saved model in the model folder
-    list_of_files = glob.glob(filepath + '*.h5')                     # '*' means all if need specific format then e.g.: '*.h5'
+    list_of_files = glob.glob(model_directory + '*.h5')                     # '*' means all if need specific format then e.g.: '*.h5'
     latest_file = max(list_of_files, key=os.path.getmtime)
     head, tail = os.path.split(latest_file)
     model_name = tail.split('.h5')[0]
 
     # load json and weights and create model
-    loaded_model = load_model_from_name(filepath + model_name)
+    loaded_model = load_model_from_name(model_directory + model_name)
 
     return loaded_model
 
-
+# load a specific model in the model folder
 def load_model_from_name(model_name):
     # load json and create model
     json_file = open(model_name + '.json', 'r')
@@ -68,7 +68,7 @@ def load_test_images(valid_path):
                                                   color_mode='rgb',
                                                   shuffle=False,
                                                   batch_size=1,
-                                                  class_mode=None)  # , class_mode='categorical') # wird im moment noch nicht benutzt
+                                                  class_mode=None)
 
     # if you forget to reset the test_generator you will get outputs in a weird order
     test_generator.reset()
@@ -80,6 +80,7 @@ def load_test_images(valid_path):
 # SAVING FUNCTIONS
 ################################################################################################################################################################
 
+# generate a model name containing a timestamp, the model name and the dataset used for training
 def create_model_name(info_dict):
     return info_dict['Time'] + '-' + info_dict['Model name'] + '-dataset_' + info_dict['Used dataset']
 
@@ -96,13 +97,13 @@ def save_model_log(log_dict, model_name):
 
 
 # Save the models and weight for future purposes
-def save_model(model, detailed_model_name):
+def save_model(model, model_name):
     create_folder(model_directory)
 
     # serialize model to JSON
     model_json = model.to_json()
-    with open(model_directory + detailed_model_name + ".json", "w") as json_file:
+    with open(model_directory + model_name + ".json", "w") as json_file:
         json_file.write(model_json)
     # serialize weights to HDF5
-    model.save_weights(model_directory + detailed_model_name + ".h5")
+    model.save_weights(model_directory + model_name + ".h5")
     print("\nSaved model to disk")

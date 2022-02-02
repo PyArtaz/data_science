@@ -5,8 +5,6 @@
 # 3 | ERROR | Filter out all messages
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import keras
-import keras.layers
 from keras.models import Model, Sequential
 from keras.applications.densenet import DenseNet121
 from keras.applications.vgg16 import VGG16
@@ -16,14 +14,15 @@ from tensorflow.keras.models import Model
 from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Flatten, Dense, BatchNormalization, MaxPool2D, Add, ZeroPadding2D
 import keras.optimizers
 import tensorflow as tf
-import preprocessing as prep
+import util
+
 
 ################################################################################################################################################################
 # General Parameters and functions
 ################################################################################################################################################################
 
-image_size = prep.image_size
-IMAGE_SIZE = prep.IMAGE_SIZE               # re-size all the images to this
+image_size = util.image_size
+IMAGE_SIZE = util.IMAGE_SIZE               # re-size all the images to this
 
 crossentropy = 'categorical_crossentropy'
 activation = 'softmax'
@@ -50,7 +49,7 @@ def create_pretrained_model_densenet121():
     # for i, layer in enumerate(densenet.layers):
     #     print(i, layer.name, layer.trainable)
 
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
 
     # output layers
     x = Flatten()(densenet.output)
@@ -71,7 +70,7 @@ def create_pretrained_model_vgg():
     """
     Source: https://github.com/krishnasahu29/SignLanguageRecognition/blob/main/vgg16.ipynb
     """
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
 
     model = VGG16(weights='imagenet', include_top=False, input_shape=[image_size, image_size, 3])
 
@@ -103,7 +102,7 @@ def create_pretrained_model_inception_v3():
     """
     Source: https://github.com/VedantMistry13/American-Sign-Language-Recognition-using-Deep-Neural-Network/blob/master/American_Sign_Language_Recognition.ipynb
     """
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
 
     inception_v3_model = InceptionV3(input_shape=(image_size, image_size, 3), include_top=False, weights='imagenet')
 
@@ -139,7 +138,7 @@ def create_pretrained_model_inception_v3():
 
 # 2d cnn model for classifying image data
 def create_custom_model_2d_cnn():
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
     model = Sequential()
 
     # We are using multiple convolution layers for feature extraction
@@ -195,7 +194,7 @@ def create_custom_model_2d_cnn():
 
 # 2d cnn model for classifying image data
 def create_custom_model_2d_cnn_v2():
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
     model = Sequential()
     model.add(Conv2D(128, (2,2), input_shape=[image_size, image_size, 3], activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
@@ -216,7 +215,7 @@ def create_custom_model_2d_cnn_v3():
     """
     Source: https://stackoverflow.com/questions/60295760/detecting-and-tracking-the-human-hand-with-opencv
     """
-    num_of_classes = prep.get_num_of_classes()
+    num_of_classes = util.get_num_of_classes()
 
     i = Input(shape=[image_size, image_size, 3])
     x = Conv2D(32, (3, 3), activation='relu', padding='same')(i)
