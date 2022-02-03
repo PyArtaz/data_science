@@ -161,7 +161,7 @@ class VideoClassification(QThread):
                         # Annotate the image with both, a bounding box and the landmark positions
                         if self.annotations:
                             image = box.draw(image)
-                            annotate_image(image, results)
+                            annotate_image(image, results, jetson_nano_on)
 
                     else:
                         win.ui.current_prediction.clear()
@@ -185,6 +185,9 @@ class VideoClassification(QThread):
                     qt_img = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)
                     pic = qt_img.scaled(1280, 720, Qt.KeepAspectRatio)
                     self.image_update.emit(pic)
+                    if not self.stopPlay:
+                        self.quit()
+                        win.ui.w_stop.setText('Start')
                 else:
                     cap.release()
                     cv2.destroyAllWindows()
@@ -286,9 +289,6 @@ class VideoClassification(QThread):
         if self.stopPlay:
             self.start()
             win.ui.w_stop.setText('Pause')
-        else:
-            self.quit()
-            win.ui.w_stop.setText('Start')
 
     def collect_state(self):
         """
