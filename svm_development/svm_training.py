@@ -93,7 +93,7 @@ def undersample_class_occurrences(X, y):
 # calculate metrics (accuracy, precision, recall and F1-score) to evaluate model performance
 def print_statistics(y_test, predictions):
     print("\nClassification Report:")
-    print(classification_report(y_test, predictions))
+    print(classification_report(y_test, predictions, digits=4))
 
     print('Accuracy score:', "%.2f" % (accuracy_score(y_test, predictions) * 100))
     print('Precision score:', "%.2f" % (precision_score(y_test, predictions, average='weighted') * 100))
