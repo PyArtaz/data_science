@@ -64,9 +64,9 @@ def subset_training_images(num_train_images):
 def load_training_images():
     train_gen = ImageDataGenerator(rescale=1. / 255.,
                                    rotation_range=20,
-                                   width_shift_range=0.2,
-                                   height_shift_range=0.2,
-                                   zoom_range=0.2,
+                                   width_shift_range=0.1,
+                                   height_shift_range=0.1,
+                                   zoom_range=0.1,
                                    brightness_range=[0.8, 1.2],
                                    fill_mode='constant')  # ,  horizontal_flip=True , label_mode='categorical')
 
