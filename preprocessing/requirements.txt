@@ -1,0 +1,5 @@
+numpy==1.21.4
+mediapipe==0.8.9.1
+opencv-python==4.5.4.60
+scikit-learn==1.0.1
+PyQt5==5.15.6
