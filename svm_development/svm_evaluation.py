@@ -12,11 +12,11 @@ from svm_plots import plot_cm, plot_multiclass_roc
 
 
 # load the latest saved model in the model folder
-def load_latest_model():
+def load_latest_model(model_name='*'):
     # Directory path containing saved models
-    directory = '../dataset/models/'
+    directory = '../models/'
     # necessary to load the latest saved model in the model folder
-    list_of_files = glob.glob(directory + '*.sav')  # '*' means all if need specific format then e.g.: '*.sav'
+    list_of_files = glob.glob(directory + model_name + '.sav')  # '*' means all if need specific format then e.g.: '*.sav'
     if len(list_of_files) == 0:
         print("Could not find any model in directory:", directory)
     else:
@@ -65,7 +65,7 @@ def repeated_ten_fold_cross_validation(model, X_test, y_test):
 
 
 if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
-    # define directory of unseen test data
+    # define directory of unseen test data (in this case the ASL+digits dataset)
     dataset_path_test = '../dataset/hand_landmarks/asl_alphabet_train/asl_alphabet+digits_replaced_landmarks_bb.csv'
 
     # define class labels in the dataset
@@ -78,7 +78,7 @@ if __name__ == '__main__':  # bei multiprocessing auf Windows notwendig
     X_test, y_test = load_test_dataframe(dataset_path_test)
 
     # load and create latest created model
-    model = load_latest_model()
+    model = load_latest_model(model_name='model_Own_landmarks_bb_squarePix_Letters+Digits')
 
     # Generate predictions for samples
     predictions = model.predict(X_test)

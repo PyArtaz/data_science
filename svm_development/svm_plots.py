@@ -20,7 +20,7 @@ def plot_cm(model, X_test, y_test):
         figManager = plt.get_current_fig_manager()
         figManager.window.showMaximized()
 
-        plt.rcParams.update({'font.size': 9})
+        plt.rcParams.update({'font.size': 7})
         plt.tight_layout()
         plt.subplots_adjust(top=0.972, bottom=0.073, left=0.008, right=0.992, hspace=0.2, wspace=0.2)
     plt.show()
