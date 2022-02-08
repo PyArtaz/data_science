@@ -17,11 +17,11 @@ The development of a highly optimized machine learning pipeline is accelerated b
 
 ## Repository
 
-This repository consists of two branches, jetnano_final and model_development that both fullfill different purposes.
+This repository consists of two branches, master and Development that both fullfill different purposes.
 
-### jetnano_final
+### master
 
-This branch conatains all files necessary to run the final project on your hardware, be it a Nvidia Jetson Nano or a computer running Python. All you have to do is change the value of the jet_nano boolean accordingly. This branch includes:
+This branch conatains all files necessary to run the final project on your hardware, be it a Nvidia Jetson Nano or a computer running Python. All you have to do is change the value of the `jetson_nano_on` boolean accordingly. This branch includes:
 
 - models folder: Support vector machines trained on different datasets and saved using [Joblib](https://joblib.readthedocs.io/en/latest/). By default, the own_landmark models for digits, numbers and both are used.
 
@@ -32,7 +32,7 @@ This branch conatains all files necessary to run the final project on your hardw
 	- bounding_box.py: Implementation of the BoundingBox class to calculate a bounding box from the MP hand landmarks.
 	- predictor.py: Implementation of the classes Predictor and DataLogger for classification of the hand landmarks and data logging purposes, respectively.
 	
-### model_development
+### Development
 
 This branch contains files for data preprocessing of image databases using MediaPipe and files to train support vector machines using the hand landmarks. There even is a possibility to use transfer learning for convolutional neural networks. This branch includes:
 
@@ -61,9 +61,9 @@ First, make sure you have Python 3.8 installed on your device.
 3. Install project requirements using pip with this command: `pip install -r requirements.txt`
 4. You can start the GUI by executing `start_gui_v6.py`
 
-### Create your own application using model_development
+### Create your own application using Development
 
-Make sure you followed the first three steps above and then switched the branch to model_development.
+Make sure you followed the first three steps above and then switched the branch to Development.
 
 1. Create your own hand-gesture database using `preprocessing/capture.py` or use an existing database
 2. Extract the hand landmarks from the database images using `preprocessing/source_data.py`
